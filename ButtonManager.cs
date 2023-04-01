@@ -13,9 +13,9 @@ public class ButtonManager : MonoBehaviour
 
     private void Awake()
     {
-        _audioManager = AudioManager.Instance;
-        _gameManager = GameManager.Instance;
-        _storyManager = StoryManager.Instance;
+        if(_audioManager == null) _audioManager = AudioManager.Instance;
+        if (_gameManager == null) _gameManager = GameManager.Instance;
+        if (_storyManager == null) _storyManager = StoryManager.Instance;
     }
 
     public void OnClickOptionBtn()
@@ -48,7 +48,6 @@ public class ButtonManager : MonoBehaviour
     public void OnClickFPS30Btn()
     {
         _audioManager.PlaySFX("ButtonClick");
-        _gameManager._canvas.transform.Find("Main/TempBtn").GetComponent<Button>().Select();
         _gameManager._canvas.transform.Find("Option/OptionWindow/FPS/FPS60Btn/Selected").gameObject.SetActive(false);
         _gameManager._canvas.transform.Find("Option/OptionWindow/FPS/FPS30Btn/Selected").gameObject.SetActive(true);
         PlayerPrefs.SetInt("FPS", 30);
@@ -58,7 +57,6 @@ public class ButtonManager : MonoBehaviour
     public void OnClickFPS60Btn()
     {
         _audioManager.PlaySFX("ButtonClick");
-        _gameManager._canvas.transform.Find("Main/TempBtn").GetComponent<Button>().Select();
         _gameManager._canvas.transform.Find("Option/OptionWindow/FPS/FPS30Btn/Selected").gameObject.SetActive(false);
         _gameManager._canvas.transform.Find("Option/OptionWindow/FPS/FPS60Btn/Selected").gameObject.SetActive(true);
         PlayerPrefs.SetInt("FPS", 60);
@@ -68,15 +66,19 @@ public class ButtonManager : MonoBehaviour
     public void OnClickKoreanBtn()
     {
         _audioManager.PlaySFX("ButtonClick");
-        _gameManager._canvas.transform.Find("Main/TempBtn").GetComponent<Button>().Select();
+        _gameManager._canvas.transform.Find("Option/OptionWindow/Language/KoreanBtn/Selected").gameObject.SetActive(true);
+        _gameManager._canvas.transform.Find("Option/OptionWindow/Language/JapaneseBtn/Selected").gameObject.SetActive(false);
         PlayerPrefs.SetString("Language", "Korean");
+        Application.Quit();
     }
 
     public void OnClickJapaneseBtn()
     {
         _audioManager.PlaySFX("ButtonClick");
-        _gameManager._canvas.transform.Find("Main/TempBtn").GetComponent<Button>().Select();
+        _gameManager._canvas.transform.Find("Option/OptionWindow/Language/KoreanBtn/Selected").gameObject.SetActive(false);
+        _gameManager._canvas.transform.Find("Option/OptionWindow/Language/JapaneseBtn/Selected").gameObject.SetActive(true);
         PlayerPrefs.SetString("Language", "Japanese");
+        Application.Quit();
     }
 
     public void OnClickEpisodeBackground()

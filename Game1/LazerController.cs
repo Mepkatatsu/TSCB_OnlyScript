@@ -22,7 +22,7 @@ public class LazerController : MonoBehaviour
 
     private void Awake()
     {
-        _shootingGameManager = ShootingGameManager.Instance;
+        if (_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
     }
 
     public void SetCanMoveLazer(bool canMoveLazer)

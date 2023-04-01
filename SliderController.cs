@@ -10,7 +10,7 @@ public class SliderController : MonoBehaviour
 
     private void Awake()
     {
-        _audioManager = AudioManager.Instance;
+        if(_audioManager == null) _audioManager = AudioManager.Instance;
     }
 
     public void OnValueChangedBGM()

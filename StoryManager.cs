@@ -1,4 +1,4 @@
-using DG.Tweening;
+ï»¿using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -53,24 +53,27 @@ namespace SingletonPattern
             public Sprite[] backgroundArray;
         }
 
-        // ÀÌ¹ÌÁö°¡ 9°³ ÀÖ´Â Ä³¸¯ÅÍÀÇ °æ¿ì, 9¹ø¿¡ ´õ¹Ì ÀÌ¹ÌÁö¸¦ Áı¾î³Ö¾î 10~19±îÁö »ç¿ëÇÒ ¼ö ÀÖµµ·Ï ¼³Á¤
+        // ì´ë¯¸ì§€ê°€ 9ê°œ ìˆëŠ” ìºë¦­í„°ì˜ ê²½ìš°, 9ë²ˆì— ë”ë¯¸ ì´ë¯¸ì§€ë¥¼ ì§‘ì–´ë„£ì–´ 10~19ê¹Œì§€ ì‚¬ìš©í•  ìˆ˜ ìˆë„ë¡ ì„¤ì •
         [SerializeField] MomoiImage _momoiImage;
         [SerializeField] MidoriImage _midoriImage;
         [SerializeField] ArisImage _arisImage;
         [SerializeField] YuzuImage _yuzuImage;
 
-        // ButtonImage 0: Èò»ö ¹è°æ, 1: ³ë¶õ»ö ¹è°æ
+        // ButtonImage 0: í°ìƒ‰ ë°°ê²½, 1: ë…¸ë€ìƒ‰ ë°°ê²½
         [SerializeField] ButtonImage _buttonImage;
 
         // 0: Background, 1: GameDevelopment, 2: TSCBackground, 3: RingOfRight, 4: Ruins, 5: GameCenter
         [SerializeField] EpisodeBackgroundImage _episodeBackgroundImage;
 
-        private GameObject _characterName;
-        private GameObject _departmentName;
-        private GameObject _dialog;
-        private GameObject _selection1Btn;
-        private GameObject _selection1_1Btn;
-        private GameObject _selection1_2Btn;
+        [HideInInspector] public GameObject _characterName;
+        [HideInInspector] public GameObject _departmentName;
+        [HideInInspector] public GameObject _dialogText;
+        [HideInInspector] public GameObject _selection1Btn;
+        [HideInInspector] public GameObject _selection1_1Btn;
+        [HideInInspector] public GameObject _selection1_2Btn;
+        [HideInInspector] public TMP_Text _windowText;
+        [HideInInspector] public TMP_Text _gameOverText;
+        [HideInInspector] public TMP_Text _gameOver2Text;
 
         private Image _momoiCharacterImage;
         private Image _midoriCharacterImage;
@@ -81,31 +84,31 @@ namespace SingletonPattern
         private Image _yuzuHaloImage;
         private Image _arisHaloImage;
 
-        private List<string> _characterNameList = new List<string>();    // Ä³¸¯ÅÍ ÀÌ¸§ ¸ñ·Ï
-        private List<string> _departmentNameList = new List<string>();   // ¼Ò¼Ó ÀÌ¸§ ¸ñ·Ï
-        private List<string> _dialogList = new List<string>();           // ´ëÈ­ ³»¿ë ¸ñ·Ï
-        private List<float> _textSpeedList = new List<float>();          // ´ëÈ­ ³»¿ë ¸ñ·Ï
+        private List<string> _characterNameList = new List<string>();    // ìºë¦­í„° ì´ë¦„ ëª©ë¡
+        private List<string> _departmentNameList = new List<string>();   // ì†Œì† ì´ë¦„ ëª©ë¡
+        private List<string> _dialogList = new List<string>();           // ëŒ€í™” ë‚´ìš© ëª©ë¡
+        private List<float> _textSpeedList = new List<float>();          // ëŒ€í™” ë‚´ìš© ëª©ë¡
 
-        private int _storyNum = 0;                   // ½ºÅä¸®°¡ ¾îµğ±îÁö ÁøÇàµÆ´ÂÁö ÀúÀåÇÏ´Â ¹øÈ£
+        private int _storyNum = 0;                   // ìŠ¤í† ë¦¬ê°€ ì–´ë””ê¹Œì§€ ì§„í–‰ëëŠ”ì§€ ì €ì¥í•˜ëŠ” ë²ˆí˜¸
 
-        private Coroutine _coroutineStoryProgress;   // ´ë»ç¸¦ ÇÑ±ÛÀÚ¾¿ Ãâ·ÂÇÏ´Â ÄÚ·çÆ¾, È­¸éÀ» ÅÍÄ¡ÇÏ¸é ÁßÁö½ÃÅ°°í ÇÑ ¹ø¿¡ Ç¥½ÃÇÏ±â À§ÇØ »ç¿ë
-        private Coroutine _autoStoryProgress;        // ÀÚµ¿À¸·Î ½ºÅä¸®¸¦ ÁøÇà½ÃÄÑÁÖ´Â ÄÚ·çÆ¾
-        private Coroutine _coroutineWindowFadeOut;   // È­¸éÀÌ °Ë°Ô Fade OutµÇ´Â ÄÚ·çÆ¾, È­¸éÀ» ´Ù½Ã Fade In ÇÒ ¶§ Ãæµ¹ÀÌ »ı±âÁö ¾Êµµ·Ï ÀúÀåÇÏ¿© Áß´Ü½ÃÅ´
+        private Coroutine _coroutineStoryProgress;   // ëŒ€ì‚¬ë¥¼ í•œê¸€ìì”© ì¶œë ¥í•˜ëŠ” ì½”ë£¨í‹´, í™”ë©´ì„ í„°ì¹˜í•˜ë©´ ì¤‘ì§€ì‹œí‚¤ê³  í•œ ë²ˆì— í‘œì‹œí•˜ê¸° ìœ„í•´ ì‚¬ìš©
+        private Coroutine _autoStoryProgress;        // ìë™ìœ¼ë¡œ ìŠ¤í† ë¦¬ë¥¼ ì§„í–‰ì‹œì¼œì£¼ëŠ” ì½”ë£¨í‹´
+        private Coroutine _coroutineWindowFadeOut;   // í™”ë©´ì´ ê²€ê²Œ Fade Outë˜ëŠ” ì½”ë£¨í‹´, í™”ë©´ì„ ë‹¤ì‹œ Fade In í•  ë•Œ ì¶©ëŒì´ ìƒê¸°ì§€ ì•Šë„ë¡ ì €ì¥í•˜ì—¬ ì¤‘ë‹¨ì‹œí‚´
 
-        private bool _canProgress = false;           // ÇöÀç ½ºÅä¸®¸¦ ÁøÇàÇÒ ¼ö ÀÖ´ÂÁö ¿©ºÎ
-        private bool _isStoryProgressing = false;    // ½ºÅä¸®¿¡¼­ ÇöÀç ´ë»ç°¡ ³ª¿À°í ÀÖ´ÂÁö È®ÀÎ
-        private bool _isAutoStoryProgress;           // ÇöÀç ÀÚµ¿À¸·Î ½ºÅä¸®°¡ ÁøÇà ÁßÀÎÁö ¿©ºÎ¸¦ ÆÇ´Ü
-        private bool _isDialogOff = false;           // ´ëÈ­Ã¢ÀÌ ²¨Á®ÀÖ´Â »óÅÂÀÎÁö È®ÀÎ
-        private bool _isSelectionOn = false;         // ¼±ÅÃÁö°¡ ÄÑÁ³´ÂÁö È®ÀÎ
-        private bool _isPressedButton = false;       // ¹öÆ°ÀÌ ´­·¶´ÂÁö È®ÀÎ
+        private bool _canProgress = false;           // í˜„ì¬ ìŠ¤í† ë¦¬ë¥¼ ì§„í–‰í•  ìˆ˜ ìˆëŠ”ì§€ ì—¬ë¶€
+        private bool _isStoryProgressing = false;    // ìŠ¤í† ë¦¬ì—ì„œ í˜„ì¬ ëŒ€ì‚¬ê°€ ë‚˜ì˜¤ê³  ìˆëŠ”ì§€ í™•ì¸
+        private bool _isAutoStoryProgress;           // í˜„ì¬ ìë™ìœ¼ë¡œ ìŠ¤í† ë¦¬ê°€ ì§„í–‰ ì¤‘ì¸ì§€ ì—¬ë¶€ë¥¼ íŒë‹¨
+        private bool _isDialogOff = false;           // ëŒ€í™”ì°½ì´ êº¼ì ¸ìˆëŠ” ìƒíƒœì¸ì§€ í™•ì¸
+        private bool _isSelectionOn = false;         // ì„ íƒì§€ê°€ ì¼œì¡ŒëŠ”ì§€ í™•ì¸
+        private bool _isPressedButton = false;       // ë²„íŠ¼ì´ ëˆŒë €ëŠ”ì§€ í™•ì¸
 
         private int _autoStoryNum = 0;
 
         public override void Awake()
         {
-            // GameObject °´Ã¼ ¿¬°á
-            _gameManager = GameManager.Instance;
-            _audioManager = AudioManager.Instance;
+            // GameObject ê°ì²´ ì—°ê²°
+            if (_gameManager == null) _gameManager = GameManager.Instance;
+            if (_audioManager == null) _audioManager = AudioManager.Instance;
             
             _momoi = _story.transform.Find("Episode/Character/MomoiParent/Momoi").gameObject;
             _midori = _story.transform.Find("Episode/Character/MidoriParent/Midori").gameObject;
@@ -124,21 +127,25 @@ namespace SingletonPattern
 
             _characterName = _story.transform.Find("Episode/Dialog/CharacterName").gameObject;
             _departmentName = _story.transform.Find("Episode/Dialog/DepartmentName").gameObject;
-            _dialog = _story.transform.Find("Episode/Dialog/DialogText").gameObject;
+            _dialogText = _story.transform.Find("Episode/Dialog/DialogText").gameObject;
 
             _selection1Btn = _story.transform.Find("Episode/UI/Selection1Btn").gameObject;
             _selection1_1Btn = _story.transform.Find("Episode/UI/Selection1-1Btn").gameObject;
             _selection1_2Btn = _story.transform.Find("Episode/UI/Selection1-2Btn").gameObject;
+
+            _windowText = _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>();
+            _gameOverText = _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>();
+            _gameOver2Text = _story.transform.Find("Episode/WindowText_GameOver2").GetComponent<TMP_Text>();
         }
 
-        // ÇØ´ç Ä³¸¯ÅÍÀÇ ÀÌÆåÆ® ¾Ö´Ï¸ŞÀÌ¼ÇÀ» Àç»ıÇÏ´Â ÇÔ¼ö
+        // í•´ë‹¹ ìºë¦­í„°ì˜ ì´í™íŠ¸ ì• ë‹ˆë©”ì´ì…˜ì„ ì¬ìƒí•˜ëŠ” í•¨ìˆ˜
         private void PlayCharacterEffectAnimation(GameObject characterName, string animationName)
         {
             characterName.transform.Find($"{animationName}Parent/{animationName}").GetComponent<Animator>().Play(animationName);
             _audioManager.PlaySFX(animationName);
         }
 
-        // ¼±ÅÃÁö·Î °¥¸° ½ºÅä¸® ¹øÈ£ ÀÌµ¿ Ã¼Å©ÇÏ°í ÀÌµ¿ÇÏ´Â ÇÔ¼ö
+        // ì„ íƒì§€ë¡œ ê°ˆë¦° ìŠ¤í† ë¦¬ ë²ˆí˜¸ ì´ë™ ì²´í¬í•˜ê³  ì´ë™í•˜ëŠ” í•¨ìˆ˜
         private void DoStoryJump()
         {
             if (_storyNum == 23)
@@ -147,24 +154,24 @@ namespace SingletonPattern
             }
         }
 
-        // ´ëÈ­Ã¢À» ²ô°í Å°´Â ÇÔ¼ö
+        // ëŒ€í™”ì°½ì„ ë„ê³  í‚¤ëŠ” í•¨ìˆ˜
         private void SetDialogOn(bool isDialogOff)
         {
             if (!isDialogOff)
             {
                 _canProgress = false;
                 _isDialogOff = true;
-                _dialog.transform.parent.gameObject.SetActive(false);
+                _dialogText.transform.parent.gameObject.SetActive(false);
             }
             else
             {
                 _canProgress = true;
                 _isDialogOff = false;
-                _dialog.transform.parent.gameObject.SetActive(true);
+                _dialogText.transform.parent.gameObject.SetActive(true);
             }
         }
 
-        // ½ºÅä¸® ÁøÇà Áß È­¸éÀ» Å¬¸¯ÇßÀ» ¶§ ÀÛµ¿ÇÏ´Â ÇÔ¼ö
+        // ìŠ¤í† ë¦¬ ì§„í–‰ ì¤‘ í™”ë©´ì„ í´ë¦­í–ˆì„ ë•Œ ì‘ë™í•˜ëŠ” í•¨ìˆ˜
         public void EpisodeBackgroundClick()
         {
             if (_story.transform.Find("Episode/UI/Menu").gameObject.activeSelf) _story.transform.Find("Episode/UI/Menu").gameObject.SetActive(false);
@@ -179,12 +186,12 @@ namespace SingletonPattern
             }
         }
 
-        // ¼±ÅÃÁö¸¦ ´­·¶À» ¶§ ÀÛµ¿ÇÏ´Â ÇÔ¼ö
+        // ì„ íƒì§€ë¥¼ ëˆŒë €ì„ ë•Œ ì‘ë™í•˜ëŠ” í•¨ìˆ˜
         public IEnumerator SelectedSelection(int num)
         {
             if (_isPressedButton) yield break;
             _isPressedButton = true;
-            yield return new WaitForSeconds(0.5f); // ¹öÆ°ÀÌ ´­¸° ÈÄ ÁøÇàµÇµµ·Ï Àá½Ã ´ë±â
+            yield return new WaitForSeconds(0.5f); // ë²„íŠ¼ì´ ëˆŒë¦° í›„ ì§„í–‰ë˜ë„ë¡ ì ì‹œ ëŒ€ê¸°
             _isSelectionOn = false;
             _storyNum++;
             if (num == 0)
@@ -196,12 +203,12 @@ namespace SingletonPattern
                 _selection1_1Btn.SetActive(false);
                 _selection1_2Btn.SetActive(false);
 
-                // ¼±ÅÃÁö¸¦ °í¸£¸é ¾Ë¸ÂÀº ¹øÈ£·Î ÀÌµ¿
-                if (_storyNum == 14) // AÅ°¸¦ ÀÔ·ÂÇÑ´Ù.
+                // ì„ íƒì§€ë¥¼ ê³ ë¥´ë©´ ì•Œë§ì€ ë²ˆí˜¸ë¡œ ì´ë™
+                if (_storyNum == 14) // Aí‚¤ë¥¼ ì…ë ¥í•œë‹¤.
                 {
                     _storyNum = 23;
                 }
-                else if (_storyNum == 30) // AÅ° ÀÔ·Â
+                else if (_storyNum == 30) // Aí‚¤ ì…ë ¥
                 {
                     _storyNum = 30;
                 }
@@ -211,12 +218,12 @@ namespace SingletonPattern
                 _selection1_1Btn.SetActive(false);
                 _selection1_2Btn.SetActive(false);
 
-                // ¼±ÅÃÁö¸¦ °í¸£¸é ¾Ë¸ÂÀº ¹øÈ£·Î ÀÌµ¿
-                if (_storyNum == 14) // BÅ°¸¦ ÀÔ·ÂÇÑ´Ù.
+                // ì„ íƒì§€ë¥¼ ê³ ë¥´ë©´ ì•Œë§ì€ ë²ˆí˜¸ë¡œ ì´ë™
+                if (_storyNum == 14) // Bí‚¤ë¥¼ ì…ë ¥í•œë‹¤.
                 {
                     _storyNum = 14;
                 }
-                else if (_storyNum == 30) // Çª´ÏÁ©¸®¿¡°Ô Á¶½É½º·´°Ô Á¢±ÙÇÑ´Ù.
+                else if (_storyNum == 30) // í‘¸ë‹ˆì ¤ë¦¬ì—ê²Œ ì¡°ì‹¬ìŠ¤ëŸ½ê²Œ ì ‘ê·¼í•œë‹¤.
                 {
                     _storyNum = 36;
                 }
@@ -226,7 +233,7 @@ namespace SingletonPattern
             DoStoryProgress();
         }
 
-        // 1°³Â¥¸® ¼±ÅÃÁö¸¦ º¸¿©ÁÖ´Â ÇÔ¼ö
+        // 1ê°œì§œë¦¬ ì„ íƒì§€ë¥¼ ë³´ì—¬ì£¼ëŠ” í•¨ìˆ˜
         private void ShowSelection(string selectionDialog)
         {
             _isPressedButton = false;
@@ -236,7 +243,7 @@ namespace SingletonPattern
             _selection1Btn.GetComponent<Animator>().Play("ButtonPopup");
         }
 
-        // 2°³Â¥¸® ¼±ÅÃÁö¸¦ º¸¿©ÁÖ´Â ÇÔ¼ö
+        // 2ê°œì§œë¦¬ ì„ íƒì§€ë¥¼ ë³´ì—¬ì£¼ëŠ” í•¨ìˆ˜
         private void ShowSelection(string selectionDialog1, string selectionDialog2)
         {
             _isPressedButton = false;
@@ -261,7 +268,7 @@ namespace SingletonPattern
             SetCharacterImage(_midori, 10);
         }
 
-        // ÇĞ»ıµéÀÇ ÀÌ¹ÌÁö¸¦ º¯°æÇØÁÖ´Â ÇÔ¼ö
+        // í•™ìƒë“¤ì˜ ì´ë¯¸ì§€ë¥¼ ë³€ê²½í•´ì£¼ëŠ” í•¨ìˆ˜
         public IEnumerator ShowHappyMidori()
         {
             if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Jumping")) yield break;
@@ -279,7 +286,7 @@ namespace SingletonPattern
             if (characterName == _momoi)
             {
                 _momoiCharacterImage.sprite = _momoiImage.imageArray[num];
-                // ¸ğ¸ğÀÌÀÇ Ç¥Á¤ÀÌ 0¹øÀÏ ¶§´Â ´«À» ±ôºıÀÌ´Â ¸ğ¼ÇÀÌ ÀÖÀ½
+                // ëª¨ëª¨ì´ì˜ í‘œì •ì´ 0ë²ˆì¼ ë•ŒëŠ” ëˆˆì„ ê¹œë¹¡ì´ëŠ” ëª¨ì…˜ì´ ìˆìŒ
                 if (num == 0)
                 {
                     _momoiCharacterImage.GetComponent<Animator>().enabled = true;
@@ -315,7 +322,7 @@ namespace SingletonPattern
             else return false;
         }
 
-        // ½ºÅä¸®¿¡¼­ AUTO ¹öÆ°À» ´­·¶À» ¶§ ÀÚµ¿À¸·Î ½ºÅä¸®°¡ ÁøÇàµÇµµ·Ï ÇØÁÖ´Â ÇÔ¼ö
+        // ìŠ¤í† ë¦¬ì—ì„œ AUTO ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ ìë™ìœ¼ë¡œ ìŠ¤í† ë¦¬ê°€ ì§„í–‰ë˜ë„ë¡ í•´ì£¼ëŠ” í•¨ìˆ˜
         public void DoAutoProgress()
         {
             if (CheckAutoProgress()) return;
@@ -325,26 +332,26 @@ namespace SingletonPattern
             _story.transform.Find("Episode/UI/AutoBtn").GetComponent<Image>().sprite = _buttonImage.buttonArray[1];
         }
 
-        // ÀÚµ¿À¸·Î ½ºÅä¸®°¡ ÁøÇàµÇµµ·Ï ÇØÁÖ´Â ÄÚ·çÆ¾
+        // ìë™ìœ¼ë¡œ ìŠ¤í† ë¦¬ê°€ ì§„í–‰ë˜ë„ë¡ í•´ì£¼ëŠ” ì½”ë£¨í‹´
         public IEnumerator DoAutoProgressCoroutine()
         {
             while (true)
             {
-                // ÄÆ¾ÀÀÌ ÁøÇàÁßÀÏ ¶§´Â ´ë±â
+                // ì»·ì”¬ì´ ì§„í–‰ì¤‘ì¼ ë•ŒëŠ” ëŒ€ê¸°
                 while (!_canProgress)
                 {
                     yield return new WaitForSeconds(1);
                 }
 
-                // ´ëÈ­°¡ Ãâ·ÂµÇ°í ÀÖÁö ¾ÊÀ» ¶§¸¸ ÁøÇà
+                // ëŒ€í™”ê°€ ì¶œë ¥ë˜ê³  ìˆì§€ ì•Šì„ ë•Œë§Œ ì§„í–‰
                 if (!_isStoryProgressing)
                 {
-                    // ´ëÈ­ Ãâ·ÂÀÌ ¿Ï·áµÈ ÈÄ ÃÖ¼Ò 1ÃÊ ´ë±â
+                    // ëŒ€í™” ì¶œë ¥ì´ ì™„ë£Œëœ í›„ ìµœì†Œ 1ì´ˆ ëŒ€ê¸°
                     _autoStoryNum = _storyNum;
                     yield return new WaitForSeconds(1);
-                    // ½ºÅä¸® ÀÚµ¿ ÁøÇà Áß À¯Àú°¡ È­¸éÀ» ÅÍÄ¡ÇØ¼­ ´ÙÀ½ ´ë»ç·Î ³Ñ¾î°¡¸é Ä«¿îÆ®¸¦ ´Ù½Ã ½ÇÇà
-                    // ÀÌ°Ô ¾øÀ¸¸é À¯Àú°¡ 2¹ø ÅÍÄ¡¸¦ ÇØ¼­ ´ÙÀ½ ´ë»ç·Î Å¸ÀÌ¹ÖÀÌ ¾ÈÁÁ°Ô ³Ñ¾î°¥ °æ¿ì, ´ë»ç°¡ °ğ¹Ù·Î ½ºÅµµÇ´Â ¹®Á¦°¡ ¹ß»ıÇÔ
-                    // È®ÀÎÇØº¸´Ï ºí·ç ¾ÆÄ«ÀÌºê¿¡¼­µµ µ¿ÀÏÇÑ ÀÌ½´°¡ ÀÖÀ¸³ª.. AUTO ¹öÆ°À» ´©¸¥ Ã¤·Î ÅÍÄ¡ÇÏ´Â À¯Àú°¡ ¸¹Áö´Â ¾ÊÀ»Å×´Ï...
+                    // ìŠ¤í† ë¦¬ ìë™ ì§„í–‰ ì¤‘ ìœ ì €ê°€ í™”ë©´ì„ í„°ì¹˜í•´ì„œ ë‹¤ìŒ ëŒ€ì‚¬ë¡œ ë„˜ì–´ê°€ë©´ ì¹´ìš´íŠ¸ë¥¼ ë‹¤ì‹œ ì‹¤í–‰
+                    // ì´ê²Œ ì—†ìœ¼ë©´ ìœ ì €ê°€ 2ë²ˆ í„°ì¹˜ë¥¼ í•´ì„œ ë‹¤ìŒ ëŒ€ì‚¬ë¡œ íƒ€ì´ë°ì´ ì•ˆì¢‹ê²Œ ë„˜ì–´ê°ˆ ê²½ìš°, ëŒ€ì‚¬ê°€ ê³§ë°”ë¡œ ìŠ¤í‚µë˜ëŠ” ë¬¸ì œê°€ ë°œìƒí•¨
+                    // í™•ì¸í•´ë³´ë‹ˆ ë¸”ë£¨ ì•„ì¹´ì´ë¸Œì—ì„œë„ ë™ì¼í•œ ì´ìŠˆê°€ ìˆìœ¼ë‚˜.. AUTO ë²„íŠ¼ì„ ëˆ„ë¥¸ ì±„ë¡œ í„°ì¹˜í•˜ëŠ” ìœ ì €ê°€ ë§ì§€ëŠ” ì•Šì„í…Œë‹ˆ...
                     if (_autoStoryNum == _storyNum)
                     {
                         DoStoryProgress();
@@ -352,30 +359,30 @@ namespace SingletonPattern
                 }
                 else
                 {
-                    yield return new WaitForSeconds(1); // 1ÃÊ¸¶´Ù È®ÀÎ
+                    yield return new WaitForSeconds(1); // 1ì´ˆë§ˆë‹¤ í™•ì¸
                 }
             }
         }
 
-        // GameManager¿¡¼­ ½ºÅä¸® ½ÃÀÛ ¹øÈ£¸¦ ÁöÁ¤ÇÒ ¶§ »ç¿ëÇÏ´Â ÇÔ¼ö
+        // GameManagerì—ì„œ ìŠ¤í† ë¦¬ ì‹œì‘ ë²ˆí˜¸ë¥¼ ì§€ì •í•  ë•Œ ì‚¬ìš©í•˜ëŠ” í•¨ìˆ˜
         public void SetStoryNumber(int num)
         {
             _storyNum = num;
         }
 
-        // ¿ÜºÎ¿¡¼­ ½ºÅä¸®¸¦ ÁøÇàÇÒ ¼ö ÀÖ´Â »óÅÂÀÎÁö ¿©ºÎ¸¦ º¯°æÇÏ´Â ÇÔ¼ö
+        // ì™¸ë¶€ì—ì„œ ìŠ¤í† ë¦¬ë¥¼ ì§„í–‰í•  ìˆ˜ ìˆëŠ” ìƒíƒœì¸ì§€ ì—¬ë¶€ë¥¼ ë³€ê²½í•˜ëŠ” í•¨ìˆ˜
         public void SetIsCanProgress(bool isCanProgress)
         {
             this._canProgress = isCanProgress;
         }
 
-        // Ä³¸¯ÅÍ ÀÌ¸§, ºÎ¼­ ÀÌ¸§, ´ëÈ­ ³»¿ë, ÅØ½ºÆ® ¼Óµµ¸¦ °£ÆíÇÏ°Ô ¾²°í ÀúÀåÇÏ±â À§ÇÑ ÇÔ¼ö
+        // ìºë¦­í„° ì´ë¦„, ë¶€ì„œ ì´ë¦„, ëŒ€í™” ë‚´ìš©, í…ìŠ¤íŠ¸ ì†ë„ë¥¼ ê°„í¸í•˜ê²Œ ì“°ê³  ì €ì¥í•˜ê¸° ìœ„í•œ í•¨ìˆ˜
         public void AppendDialog(string characterNameText, string departmentNameText, string dialogText, float textSpeed)
         {
             _characterNameList.Add(characterNameText);
             _departmentNameList.Add(departmentNameText);
             _dialogList.Add(dialogText);
-            _textSpeedList.Add(textSpeed); // ÅØ½ºÆ® ¼Óµµ : (textSpeed) ¹è
+            _textSpeedList.Add(textSpeed); // í…ìŠ¤íŠ¸ ì†ë„ : (textSpeed) ë°°
         }
 
         private IEnumerator DoFadeEpisodeWindowFadeOut()
@@ -388,7 +395,7 @@ namespace SingletonPattern
             _WindowFadeOut.gameObject.SetActive(false);
         }
 
-        // ½ºÅä¸® ÁøÇà½Ã ÅØ½ºÆ® ¿Ü¿¡ Ä³¸¯ÅÍ ¿òÁ÷ÀÓ, È¿°úÀ½ µîÀ» °ü¸®ÇÏ´Â ÆÄÆ®
+        // ìŠ¤í† ë¦¬ ì§„í–‰ì‹œ í…ìŠ¤íŠ¸ ì™¸ì— ìºë¦­í„° ì›€ì§ì„, íš¨ê³¼ìŒ ë“±ì„ ê´€ë¦¬í•˜ëŠ” íŒŒíŠ¸
         private IEnumerator DoStoryAction(int num)
         {
             if (!_isStoryProgressing)
@@ -404,7 +411,7 @@ namespace SingletonPattern
                 }
                 else if (num == 2)
                 {
-                    _dialog.GetComponent<TMP_Text>().fontSize = 60;
+                    _dialogText.GetComponent<TMP_Text>().fontSize = 60;
                     _audioManager.PlaySFX("Start");
                 }
                 else if (num == 3)
@@ -419,7 +426,7 @@ namespace SingletonPattern
 
                     _audioManager.PlayBGM("PixelTime");
                     yield return new WaitForSeconds(1.5f);
-                    _dialog.GetComponent<TMP_Text>().fontSize = 42.5f;
+                    _dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
                     PlayCharacterEffectAnimation(_momoi, "Talking");
                     _momoi.GetComponent<Animator>().Play("Jumping");
                 }
@@ -466,9 +473,10 @@ namespace SingletonPattern
                     _momoi.GetComponent<Animator>().Play("Jumping");
                     PlayCharacterEffectAnimation(_momoi, "Talking");
                 }
-                else if (num == 8) // ¼±ÅÃÁö
+                else if (num == 8) // ì„ íƒì§€
                 {
-                    ShowSelection("( ÀÚ¸®¿¡ ¾É´Â´Ù. )");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( ìë¦¬ì— ì•‰ëŠ”ë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("ï¼ˆå¸­ã«åº§ã‚‹ï¼‰");
                 }
                 else if (num == 9) // Window Fade Out
                 {
@@ -490,9 +498,15 @@ namespace SingletonPattern
                     SetDialogOn(false);
                     yield return new WaitForSeconds(0.5f);
                     _audioManager.PlayBGM("Theme101");
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ÄÚ½º¸ğ½º ¼¼±â 2354³â, ÀÎ·ù´Â ¾÷È­ÀÇ ºÒ±æ¿¡ ÈÛ½Î¿´´Ù. >\n\n", 1));
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) 
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì½”ìŠ¤ëª¨ìŠ¤ ì„¸ê¸° 2354ë…„, ì¸ë¥˜ëŠ” ì—…í™”ì˜ ë¶ˆê¸¸ì— íœ©ì‹¸ì˜€ë‹¤. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) 
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ã‚³ã‚¹ãƒ¢ã‚¹ä¸–ç´€2354å¹´ã€äººé¡ã¯åŠ«ç«ã®ç‚ã«ã¤ã¤ã¾ã‚ŒãŸâ€¦â€¦\n\n", 1));
+
                     yield return new WaitForSeconds(2.5f);
-                    ShowSelection("¡°¡¦¡¦µ¿È­Àû »öÃ¤?¡±");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œâ€¦â€¦ë™í™”ì  ìƒ‰ì±„?â€");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œâ€¦â€¦ç«¥è©±ãƒ†ã‚¤ã‚¹ãƒˆã§ã€è‰²å½©è±Šã‹ï¼Ÿâ€");
                 }
                 else if (num == 11)
                 {
@@ -500,18 +514,30 @@ namespace SingletonPattern
                 }
                 else if (num == 12)
                 {
-                    ShowSelection("¡°¡¦¡¦.¡±", "( ¹öÆ°À» ÀÔ·ÂÇÑ´Ù. )");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œâ€¦â€¦ã€‚â€", "( ë²„íŠ¼ì„ ì…ë ¥í•œë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œâ€¦â€¦.â€", "ï¼ˆãƒœã‚¿ãƒ³ã‚’æŠ¼ã™ï¼‰");
                 }
                 else if (num == 13)
                 {
                     SetDialogOn(false);
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< Æ©Åä¸®¾óÀ» ½ÃÀÛÇÕ´Ï´Ù. >\n\n", 1));
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< íŠœí† ë¦¬ì–¼ì„ ì‹œì‘í•©ë‹ˆë‹¤. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ãƒãƒ¥ãƒ¼ãƒˆãƒªã‚¢ãƒ«ã‚’é–‹å§‹ã—ã¾ã™ã€‚\n\n", 1));
+                    
                     yield return new WaitForSeconds(2);
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¸ÕÀú B Å°¸¦ ´­·¯, ´«¾ÕÀÇ ¹«±â¸¦ ÀåÂøÇØº¸¼¼¿ä. >\n\n", 1));
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ë¨¼ì € B í‚¤ë¥¼ ëˆŒëŸ¬, ëˆˆì•ì˜ ë¬´ê¸°ë¥¼ ì¥ì°©í•´ë³´ì„¸ìš”. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ã¾ãšã¯Bãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ã¦ã€ç›®ã®å‰ã®æ­¦å™¨ã‚’è£…ç€ã—ã¦ã¿ã¦ãã ã•ã„ã€‚\n\n", 1));
+
                     yield return new WaitForSeconds(2.5f);
-                    ShowSelection("( A Å°¸¦ ÀÔ·ÂÇÑ´Ù. )", "( B Å°¸¦ ÀÔ·ÂÇÑ´Ù. )");
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( A í‚¤ë¥¼ ì…ë ¥í•œë‹¤. )", "( B í‚¤ë¥¼ ì…ë ¥í•œë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("ï¼ˆAãƒœã‚¿ãƒ³ã‚’æŠ¼ã™ï¼‰", "ï¼ˆBãƒœã‚¿ãƒ³ã‚’æŠ¼ã™ï¼‰");
                 }
-                // B ¹öÆ° ·çÆ® ½ÃÀÛ
+                // B ë²„íŠ¼ ë£¨íŠ¸ ì‹œì‘
                 else if (num == 14)
                 {
                     _audioManager.StopBGM();
@@ -522,17 +548,19 @@ namespace SingletonPattern
                 }
                 else if (num == 15)
                 {
-                    ShowSelection("¡°???¡±");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œ???â€");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œï¼Ÿï¼Ÿï¼Ÿâ€");
                 }
                 else if (num == 16)
                 {
                     SetDialogOn(false);
-                    // °ÔÀÓ ¿À¹ö
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text = "";
+                    // ê²Œì„ ì˜¤ë²„
+                    _windowText.text = "";
                     _audioManager.PlaySFX("GameOver");
                     _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().DOFade(1, 2f);
                     yield return new WaitForSeconds(4);
-                    ShowSelection("¡°?!¡±");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œ?!â€");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œï¼Ÿï¼â€");
                 }
                 else if (num == 17)
                 {
@@ -546,9 +574,9 @@ namespace SingletonPattern
                     StartCoroutine(DoFadeEpisodeWindowFadeOut());
                     yield return new WaitForSeconds(2f);
                     _momoi.transform.gameObject.SetActive(true);
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text = "";
+                    _windowText.text = "";
 
-                    //GameOver ±Û¾¾ Åõ¸íÇÏ°Ô º¯°æ
+                    //GameOver ê¸€ì”¨ íˆ¬ëª…í•˜ê²Œ ë³€ê²½
                     ColorUtility.TryParseHtmlString("#FF656B00", out Color color);
                     _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().color = color;
 
@@ -562,7 +590,8 @@ namespace SingletonPattern
                 }
                 else if (num == 19)
                 {
-                    ShowSelection("¡°¡¦¡¦.¡±");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œâ€¦â€¦.â€");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œâ€¦â€¦ã€‚â€");
                 }
                 else if (num == 20)
                 {
@@ -574,7 +603,8 @@ namespace SingletonPattern
                 }
                 else if (num == 21)
                 {
-                    ShowSelection("( ´Ù½Ã ½ÃµµÇÑ´Ù. )");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( ë‹¤ì‹œ ì‹œë„í•œë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("ï¼ˆã‚‚ã†ä¸€å›ã‚„ã‚‹ï¼‰");
                 }
                 else if (num == 22)
                 {
@@ -587,19 +617,25 @@ namespace SingletonPattern
                     _aris.transform.gameObject.SetActive(false);
                     _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[2];
                     yield return new WaitForSeconds(2f);
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¹«±â ÀåÂø¿¡ ¼º°øÇß½À´Ï´Ù. >\n\n", 1));
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ë¬´ê¸° ì¥ì°©ì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "æ­¦å™¨ã‚’è£…ç€ã—ã¾ã—ãŸã€‚\n\n", 1));
                     _audioManager.PlaySFX("Message");
                     yield return new WaitForSeconds(2f);
                     SetDialogOn(true);
                 }
-                // B ¹öÆ° ·çÆ® Á¾·á
+                // B ë²„íŠ¼ ë£¨íŠ¸ ì¢…ë£Œ
 
-                // A¹öÆ° ·çÆ®
+                // Aë²„íŠ¼ ë£¨íŠ¸
                 else if (num == 23)
                 {
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text = "";
+                    _windowText.text = "";
                     _audioManager.StopBGM();
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¹«±â ÀåÂø¿¡ ¼º°øÇß½À´Ï´Ù. >\n\n", 1));
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ë¬´ê¸° ì¥ì°©ì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "æ­¦å™¨ã‚’è£…ç€ã—ã¾ã—ãŸã€‚\n\n", 1));
                     _audioManager.PlaySFX("Message");
                     yield return new WaitForSeconds(2f);
                     SetDialogOn(true);
@@ -621,42 +657,61 @@ namespace SingletonPattern
                 {
 
                 }
-                // A¹öÆ° ·çÆ® Á¾·á
+                // Aë²„íŠ¼ ë£¨íŠ¸ ì¢…ë£Œ
                 else if (num == 28)
                 {
                     SetDialogOn(false);
                     _audioManager.PlayBGM("MechanicalJungle");
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text += "<#FF656B>";
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ÀüÅõ ¹ß»ı! ÀüÅõ ¹ß»ı! >\n\n", 1));
+                    _windowText.text += "<#FF656B>";
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì „íˆ¬ ë°œìƒ! ì „íˆ¬ ë°œìƒ! >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ã‚¨ãƒ³ã‚«ã‚¦ãƒ³ãƒˆãŒç™ºç”Ÿã—ã¾ã—ãŸï¼\n\n", 1));
+
                     yield return new WaitForSeconds(2);
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text += "</color>";
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¾ß»ıÀÇ Çª´ÏÁ©¸®°¡ ³ªÅ¸³µ´Ù! >\n\n", 1));
+
+                    _windowText.text += "</color>";
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì•¼ìƒì˜ í‘¸ë‹ˆì ¤ë¦¬ê°€ ë‚˜íƒ€ë‚¬ë‹¤! >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "é‡ç”Ÿã®ãƒ—ãƒ‹ãƒ—ãƒ‹ãŒç¾ã‚ŒãŸï¼\n\n", 1));
                     yield return new WaitForSeconds(2);
                     SetDialogOn(true);
                 }
                 else if (num == 29)
                 {
-                    ShowSelection("( A¹öÆ° ÀÔ·Â, < ºñ°Ë Ã÷¹Ù¸Ş°¡¿¡½Ã, ÇÑ ¹ø¿¡ ÀûÀ» 2È¸ °ø°İÇÑ´Ù. > )", "( Çª´ÏÁ©¸®¿¡°Ô Á¶½É½º·´°Ô Á¢±ÙÇÑ´Ù. )");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( Aë²„íŠ¼ ì…ë ¥, < ë¹„ê²€ ì¸ ë°”ë©”ê°€ì—ì‹œ, í•œ ë²ˆì— ì ì„ 2íšŒ ê³µê²©í•œë‹¤. > )", "( í‘¸ë‹ˆì ¤ë¦¬ì—ê²Œ ì¡°ì‹¬ìŠ¤ëŸ½ê²Œ ì ‘ê·¼í•œë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("ï¼ˆAãƒœã‚¿ãƒ³ã€Œç§˜å‰£ã¤ã°ã‚ãŒè¿”ã—ï¼šæ•µã«å¯¾ã—ã¦ï¼’å›æ”»æ’ƒã‚’ã™ã‚‹ã€ï¼‰", "ï¼ˆãƒ—ãƒ‹ãƒ—ãƒ‹ã«ç”¨å¿ƒæ·±ãæ¥è¿‘ã™ã‚‹ï¼‰");
                 }
-                // A¹öÆ°À» ´©¸¥´Ù ·çÆ® ½ÃÀÛ
+                // Aë²„íŠ¼ì„ ëˆ„ë¥¸ë‹¤ ë£¨íŠ¸ ì‹œì‘
                 else if (num == 30)
                 {
                     SetDialogOn(false);
                     _audioManager.StopBGM();
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ÅÁ!! >\n\n", 1));
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< íƒ•!! >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ãƒƒãƒ€ãƒ¼ãƒ³ï¼\n\n", 1));
                     _audioManager.PlaySFX("8bitBang");
-                    yield return new WaitForSeconds(2);
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¸íÁß, ´ç½ÅÀÇ Ä³¸¯ÅÍ°¡ Áï»çÇß´Ù. >\n\n", 1));
-                    _audioManager.PlaySFX("KnockDown");
+
                     yield return new WaitForSeconds(2);
 
-                    // °ÔÀÓ ¿À¹ö
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text = "";
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ëª…ì¤‘, ë‹¹ì‹ ì˜ ìºë¦­í„°ê°€ ì¦‰ì‚¬í–ˆë‹¤. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "æ”»æ’ƒãŒå‘½ä¸­ã€å³æ­»ã—ã¾ã—ãŸ\n\n", 1));
+                    _audioManager.PlaySFX("KnockDown");
+
+                    yield return new WaitForSeconds(2);
+
+                    // ê²Œì„ ì˜¤ë²„
+                    _windowText.text = "";
                     _audioManager.PlaySFX("GameOver");
                     _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().DOFade(1, 2);
                     yield return new WaitForSeconds(4);
 
-                    ShowSelection("¡°??!!¡±");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œ??!!â€");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œï¼Ÿï¼Ÿï¼ï¼â€");
                 }
                 else if (num == 31)
                 {
@@ -671,9 +726,9 @@ namespace SingletonPattern
                     StartCoroutine(DoFadeEpisodeWindowFadeOut());
                     yield return new WaitForSeconds(2);
                     _momoi.transform.gameObject.SetActive(true);
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text = "";
+                    _windowText.text = "";
 
-                    //GameOver ±Û¾¾ Åõ¸íÇÏ°Ô º¯°æ
+                    //GameOver ê¸€ì”¨ íˆ¬ëª…í•˜ê²Œ ë³€ê²½
                     ColorUtility.TryParseHtmlString("#FF656B00", out Color color);
                     _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().color = color;
                     ColorUtility.TryParseHtmlString("#5DC48100", out color);
@@ -705,48 +760,75 @@ namespace SingletonPattern
                 }
                 else if (num == 34)
                 {
-                    ShowSelection("( ´Ù½Ã ½ÃµµÇÑ´Ù. )");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( ë‹¤ì‹œ ì‹œë„í•œë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("ï¼ˆã‚‚ã†ä¸€å›ã‚„ã‚‹ï¼‰");
                 }
-                else if (num == 35) // Window Fade Out(°ÔÀÓ ºÎºĞÀ¸·Î)
+                else if (num == 35) // Window Fade Out(ê²Œì„ ë¶€ë¶„ìœ¼ë¡œ)
                 {
                     StartCoroutine(DoFadeEpisodeWindowFadeOut());
                     StartCoroutine(_audioManager.FadeOutMusic());
                     _audioManager.PlaySFX("TSCStart");
-                    yield return new WaitForSeconds(1);
-                    yield return new WaitForSeconds(1);
+                    yield return new WaitForSeconds(2);
                     SetDialogOn(false);
                     _momoi.transform.gameObject.SetActive(false);
                     _aris.transform.gameObject.SetActive(false);
                     _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[2];
+
                     yield return new WaitForSeconds(2);
 
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¹«±â ÀåÂø¿¡ ¼º°øÇß½À´Ï´Ù. >\n\n", 1));
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ë¬´ê¸° ì¥ì°©ì— ì„±ê³µí–ˆìŠµë‹ˆë‹¤. >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "æ­¦å™¨ã‚’è£…ç€ã—ã¾ã—ãŸã€‚\n\n", 1));
                     _audioManager.PlaySFX("Message");
+
                     yield return new WaitForSeconds(2f);
 
                     _audioManager.PlayBGM("MechanicalJungle");
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text += "<#FF656B>";
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ÀüÅõ ¹ß»ı! ÀüÅõ ¹ß»ı! >\n\n", 1));
-                    yield return new WaitForSeconds(2);
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text += "</color>";
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¾ß»ıÀÇ Çª´ÏÁ©¸®°¡ ³ªÅ¸³µ´Ù! >\n\n", 1));
+                    _windowText.text += "<#FF656B>";
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì „íˆ¬ ë°œìƒ! ì „íˆ¬ ë°œìƒ! >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ã‚¨ãƒ³ã‚«ã‚¦ãƒ³ãƒˆãŒç™ºç”Ÿã—ã¾ã—ãŸï¼\n\n", 1));
+
                     yield return new WaitForSeconds(2);
 
-                    ShowSelection("( Çª´ÏÁ©¸®¿¡°Ô Á¶½É½º·´°Ô Á¢±ÙÇÑ´Ù. )");
+                    _windowText.text += "</color>";
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì•¼ìƒì˜ í‘¸ë‹ˆì ¤ë¦¬ê°€ ë‚˜íƒ€ë‚¬ë‹¤! >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "é‡ç”Ÿã®ãƒ—ãƒ‹ãƒ—ãƒ‹ãŒç¾ã‚ŒãŸï¼\n\n", 1));
+
+                    yield return new WaitForSeconds(2);
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( í‘¸ë‹ˆì ¤ë¦¬ì—ê²Œ ì¡°ì‹¬ìŠ¤ëŸ½ê²Œ ì ‘ê·¼í•œë‹¤. )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("ï¼ˆãƒ—ãƒ‹ãƒ—ãƒ‹ã«ç”¨å¿ƒæ·±ãæ¥è¿‘ã™ã‚‹ï¼‰");
                 }
-                // Çª´ÏÁ©¸®¿¡°Ô Á¶½É½º·´°Ô Á¢±ÙÇÑ´Ù. (°øÅë ·çÆ®)
+                // í‘¸ë‹ˆì ¤ë¦¬ì—ê²Œ ì¡°ì‹¬ìŠ¤ëŸ½ê²Œ ì ‘ê·¼í•œë‹¤. (ê³µí†µ ë£¨íŠ¸)
                 else if (num == 36)
                 {
                     SetDialogOn(false);
                     yield return new WaitForSeconds(2);
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ¿À·ù ¹ß»ı! ¿À·ù ¹ß»ı! >\n\n", 1));
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì˜¤ë¥˜ ë°œìƒ! ì˜¤ë¥˜ ë°œìƒ! >\n\n", 1));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "ã‚¨ãƒ©ãƒ¼ï¼ã‚¨ãƒ©ãƒ¼ï¼\n\n", 1));
+
                     _audioManager.StopBGM();
                     _audioManager.PlaySFX("RobotTalk");
                     yield return new WaitForSeconds(2);
-                    StartCoroutine(AppendTextOneByOne(_story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>(), "< ½É°¢ÇÑ ¿À·ù ¹ß»ıÀ¸·Î ½Ã½ºÅÛÀ» ±ä±Ş Á¤ÁöÇÕ´Ï´Ù. >\n\n", 1));
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "< ì‹¬ê°í•œ ì˜¤ë¥˜ ë°œìƒìœ¼ë¡œ ì‹œìŠ¤í…œì„ ê¸´ê¸‰ ì •ì§€í•©ë‹ˆë‹¤. >\n\n", 1.5f));
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                        StartCoroutine(AppendTextOneByOne(_windowText, "æ·±åˆ»ãªã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¦ã‚·ã‚¹ãƒ†ãƒ ã‚’ç·Šæ€¥åœæ­¢ã—ã¾ã™ã€‚\n\n", 1));
+
                     _audioManager.PlaySFX("RobotTalk");
                     yield return new WaitForSeconds(2);
-                    ShowSelection("¡°!?¡±");
+
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("â€œ!?â€");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œï¼ï¼Ÿâ€");
                 }
                 else if (num == 37)
                 {
@@ -762,11 +844,11 @@ namespace SingletonPattern
                     yield return new WaitForSeconds(2);
                     SetDialogOn(false);
                     _momoi.SetActive(true);
-                    _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>().text = "";
+                    _windowText.text = "";
 
                     _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[1];
                     yield return new WaitForSeconds(2);
-                    // Èë¸ÕÁö ¿¬Ãâ?
+                    // í™ë¨¼ì§€ ì—°ì¶œ?
 
                     SetDialogOn(true);
                     _momoi.GetComponent<Animator>().Play("Shiver");
@@ -806,13 +888,14 @@ namespace SingletonPattern
                 }
                 else if (num == 42)
                 {
-                    ShowSelection("( Á¤½ÅÀÌ Èå·ÁÁø´Ù¡¦¡¦ )");
+                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( ì •ì‹ ì´ íë ¤ì§„ë‹¤â€¦â€¦ )");
+                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("â€œè¦–ç•ŒãŒã¼ã‚„ã‘ã‚‹â€¦â€¦â€");
                 }
                 else if (num == 43)
                 {
                     SetDialogOn(false);
                     _WindowFadeOut.gameObject.SetActive(true);
-                    // È­¸é ±ôºıÀÌ´Â ¿¬Ãâ, DOTweenÀ» »ç¿ëÇÏ¸é Áß°£Áß°£ ²÷±â´Â ´À³¦ÀÌ µé¾î¼­ µû·Î ±¸ÇöÇÑ ÇÔ¼ö »ç¿ë
+                    // í™”ë©´ ê¹œë¹¡ì´ëŠ” ì—°ì¶œ, DOTweenì„ ì‚¬ìš©í•˜ë©´ ì¤‘ê°„ì¤‘ê°„ ëŠê¸°ëŠ” ëŠë‚Œì´ ë“¤ì–´ì„œ ë”°ë¡œ êµ¬í˜„í•œ í•¨ìˆ˜ ì‚¬ìš©
 
                     _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeInImage(0.5f, _WindowFadeOut));
                     yield return new WaitForSeconds(0.5f);
@@ -842,28 +925,33 @@ namespace SingletonPattern
                     yield return new WaitForSeconds(2);
 
 
-                    // ´ëÈ­Ã¢À» °¡¸®´Â WindowFadeOut °¨Ãß°í, ¹è°æÀ» °ËÀº»öÀ¸·Î º¯°æ
+                    // ëŒ€í™”ì°½ì„ ê°€ë¦¬ëŠ” WindowFadeOut ê°ì¶”ê³ , ë°°ê²½ì„ ê²€ì€ìƒ‰ìœ¼ë¡œ ë³€ê²½
                     _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[0];
                     _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = Color.black;
                     StartCoroutine(_gameManager.FadeOutImage(4f, _WindowFadeOut));
                     _yuzu.SetActive(false);
                     _aris.SetActive(false);
-                    _audioManager.PlaySFX("KnockDown"); // ¾²·¯Áö´Â ¼Ò¸®
+                    _audioManager.PlaySFX("KnockDown"); // ì“°ëŸ¬ì§€ëŠ” ì†Œë¦¬
                     _audioManager.StopBGM();
                     yield return new WaitForSeconds(1);
 
                     _WindowFadeOut.gameObject.SetActive(false);
                     SetDialogOn(true);
-                    _dialog.GetComponent<TMP_Text>().fontSize = 60;
+                    _dialogText.GetComponent<TMP_Text>().fontSize = 60;
                     _audioManager.PlaySFX("Confuse");
                 }
-                else if (num == 44) // ¸ŞÀÎÈ­¸éÀ¸·Î ÀÌµ¿
+                else if (num == 44) // ë©”ì¸í™”ë©´ìœ¼ë¡œ ì´ë™
                 {
-                    _gameManager.DoFinishStory(0);
-                }
-                // 1Àå Á¾·á
+                    CheckAutoProgress();
 
-                // 2Àå ½ÃÀÛ
+                    _gameManager.DoFinishStory(0);
+
+                    yield break;
+
+                }
+                // 1ì¥ ì¢…ë£Œ
+
+                // 2ì¥ ì‹œì‘
                 else if (num == 45)
                 {
                     SetDialogOn(false);
@@ -893,11 +981,11 @@ namespace SingletonPattern
                 }
                 else if (num == 48)
                 {
-                    ShowSelection("( ¡¦¡¦. )");
+                    ShowSelection("( â€¦â€¦. )");
                 }
                 else if (num == 52)
                 {
-                    ShowSelection("( ¡¦¡¦. )");
+                    ShowSelection("( â€¦â€¦. )");
                 }
                 else if (num == 53)
                 {
@@ -908,7 +996,7 @@ namespace SingletonPattern
                 }
                 else if (num == 54)
                 {
-                    ShowSelection("( ´«À» ¶á´Ù. )");
+                    ShowSelection("( ëˆˆì„ ëœ¬ë‹¤. )");
                 }
                 else if (num == 55)
                 {
@@ -934,7 +1022,7 @@ namespace SingletonPattern
                 }
                 else if (num == 56)
                 {
-                    ShowSelection("( ¹Ìµµ¸®? )", "( ¡¦¡¦¾Æ´Ï, ÇìÀÏ·Î°¡ ¾ø´Â °É º¸´Ï ¿ì¸® ÇĞ»ıÀÌ ¾Æ´Ï±º. )");
+                    ShowSelection("( ë¯¸ë„ë¦¬? )", "( â€¦â€¦ì•„ë‹ˆ, í—¤ì¼ë¡œê°€ ì—†ëŠ” ê±¸ ë³´ë‹ˆ ìš°ë¦¬ í•™ìƒì´ ì•„ë‹ˆêµ°. )");
                 }
                 else if (num == 57)
                 {
@@ -951,7 +1039,7 @@ namespace SingletonPattern
                 }
                 else if (num == 62)
                 {
-                    ShowSelection("¡°¡¦¡¦¹ÌÁõÀ¯ÀÇ À§±â ¾Æ´Ï¾ú¾î?¡±");
+                    ShowSelection("â€œâ€¦â€¦ë¯¸ì¦ìœ ì˜ ìœ„ê¸° ì•„ë‹ˆì—ˆì–´?â€");
                 }
                 else if (num == 63)
                 {
@@ -961,7 +1049,7 @@ namespace SingletonPattern
                 }
                 else if (num == 64)
                 {
-                    ShowSelection("¡°±×·² ¼öµµ ÀÖÁö.¡±");
+                    ShowSelection("â€œê·¸ëŸ´ ìˆ˜ë„ ìˆì§€.â€");
                 }
                 else if (num == 65)
                 {
@@ -974,7 +1062,7 @@ namespace SingletonPattern
                 }
                 else if (num == 67)
                 {
-                    ShowSelection("¡°ÇÏÁö¸¸ ³ª´Â ½Î¿òÀ» Àß ¸øÇÏ´Â °É.¡±");
+                    ShowSelection("â€œí•˜ì§€ë§Œ ë‚˜ëŠ” ì‹¸ì›€ì„ ì˜ ëª»í•˜ëŠ” ê±¸.â€");
                 }
                 else if (num == 68)
                 {
@@ -1007,7 +1095,7 @@ namespace SingletonPattern
                 }
                 else if (num == 74)
                 {
-                    ShowSelection("¡°³»°¡ µµ¿òÀÌ µÈ´Ù¸é¾ß ¾ó¸¶µçÁö.¡±");
+                    ShowSelection("â€œë‚´ê°€ ë„ì›€ì´ ëœë‹¤ë©´ì•¼ ì–¼ë§ˆë“ ì§€.â€");
                 }
                 else if (num == 75)
                 {
@@ -1031,7 +1119,7 @@ namespace SingletonPattern
                 }
                 else if (num == 77)
                 {
-                    ShowSelection("¡°ÀÚ, Àá½Ã¸¸!¡±");
+                    ShowSelection("â€œì, ì ì‹œë§Œ!â€");
                 }
                 else if (num == 78)
                 {
@@ -1056,7 +1144,7 @@ namespace SingletonPattern
                 }
                 else if (num == 79)
                 {
-                    ShowSelection("( ½ÅÀüÀÌ¶ó±âº¸´Ù´Â ¿À¶ô½ÇÃ³·³ º¸ÀÌ´Âµ¥¡¦¡¦ )");
+                    ShowSelection("( ì‹ ì „ì´ë¼ê¸°ë³´ë‹¤ëŠ” ì˜¤ë½ì‹¤ì²˜ëŸ¼ ë³´ì´ëŠ”ë°â€¦â€¦ )");
                 }
                 else if (num == 80)
                 {
@@ -1069,7 +1157,7 @@ namespace SingletonPattern
                 }
                 else if (num == 82)
                 {
-                    ShowSelection("( °ÔÀÓ±â¸¦ »ìÆìº»´Ù. )");
+                    ShowSelection("( ê²Œì„ê¸°ë¥¼ ì‚´í´ë³¸ë‹¤. )");
                 }
                 else if (num == 83)
                 {
@@ -1092,11 +1180,11 @@ namespace SingletonPattern
                 }
                 else if (num == 86)
                 {
-                    ShowSelection("¡°ÃÖ±Ù ³¯Â¥·Î ¿Ã¼ö·Ï Á¡¼ö°¡ ¿ÀÈ÷·Á ³·¾ÆÁ³³×?¡±");
+                    ShowSelection("â€œìµœê·¼ ë‚ ì§œë¡œ ì˜¬ìˆ˜ë¡ ì ìˆ˜ê°€ ì˜¤íˆë ¤ ë‚®ì•„ì¡Œë„¤?â€");
                 }
                 else if (num == 90)
                 {
-                    ShowSelection("( ¹Ìµµ¸®ÀÇ ÇÃ·¹ÀÌ¸¦ ÁöÄÑº»´Ù. )");
+                    ShowSelection("( ë¯¸ë„ë¦¬ì˜ í”Œë ˆì´ë¥¼ ì§€ì¼œë³¸ë‹¤. )");
                 }
                 else if (num == 91)
                 {
@@ -1158,7 +1246,7 @@ namespace SingletonPattern
                 }
                 else if (num == 94)
                 {
-                    ShowSelection("¡°°ø°İÀ» °ÅÀÇ ÀüºÎ ÀûÁß½ÃÄ×´Âµ¥µµ ·©Å· ÁøÀÔ¿¡ ½ÇÆĞÇÏ´Ù´Ï¡¦¡¦¡±");
+                    ShowSelection("â€œê³µê²©ì„ ê±°ì˜ ì „ë¶€ ì ì¤‘ì‹œì¼°ëŠ”ë°ë„ ë­í‚¹ ì§„ì…ì— ì‹¤íŒ¨í•˜ë‹¤ë‹ˆâ€¦â€¦â€");
                 }
                 else if (num == 95)
                 {
@@ -1166,7 +1254,7 @@ namespace SingletonPattern
                 }
                 else if (num == 96)
                 {
-                    ShowSelection("( ±×·¸´Ù¸é È¤½Ã¡¦¡¦ )", "¡°³»°¡ ÇÃ·¹ÀÌÇØ ºÁµµ ±¦ÂúÀ»±î?¡±");
+                    ShowSelection("( ê·¸ë ‡ë‹¤ë©´ í˜¹ì‹œâ€¦â€¦ )", "â€œë‚´ê°€ í”Œë ˆì´í•´ ë´ë„ ê´œì°®ì„ê¹Œ?â€");
                 }
                 else if (num == 97)
                 {
@@ -1193,7 +1281,7 @@ namespace SingletonPattern
                 }
                 else if (num == 99)
                 {
-                    ShowSelection("( °ÔÀÓÀ» ½ÃÀÛÇÑ´Ù. )");
+                    ShowSelection("( ê²Œì„ì„ ì‹œì‘í•œë‹¤. )");
                 }
                 else if (num == 100)
                 {
@@ -1203,9 +1291,9 @@ namespace SingletonPattern
                     yield return new WaitForSeconds(2);
 
                     SetDialogOn(false);
-                    _gameManager._canvas.transform.Find("Story/Episode/UI/Menu").gameObject.SetActive(false); // ¿­¸° ¸Ş´ºÃ¢ ¼û±â±â
-                    _gameManager._canvas.transform.Find("Story/Episode/UI").gameObject.SetActive(false); // UI ¼û±â±â
-                    _gameManager._canvas.transform.Find("Story/Episode/Dialog").gameObject.SetActive(false); // ´ëÈ­Ã¢ ¼û±â±â
+                    _gameManager._canvas.transform.Find("Story/Episode/UI/Menu").gameObject.SetActive(false); // ì—´ë¦° ë©”ë‰´ì°½ ìˆ¨ê¸°ê¸°
+                    _gameManager._canvas.transform.Find("Story/Episode/UI").gameObject.SetActive(false); // UI ìˆ¨ê¸°ê¸°
+                    _gameManager._canvas.transform.Find("Story/Episode/Dialog").gameObject.SetActive(false); // ëŒ€í™”ì°½ ìˆ¨ê¸°ê¸°
                     _gameManager.DoStartShootingGame();
 
                     _canProgress = false;
@@ -1220,7 +1308,7 @@ namespace SingletonPattern
                 }
                 else if (num == 103)
                 {
-                    ShowSelection("( ´Ù½Ã ½ÃµµÇÑ´Ù. )");
+                    ShowSelection("( ë‹¤ì‹œ ì‹œë„í•œë‹¤. )");
                     _storyNum = 99;
                 }
                 else if (num == 104)
@@ -1246,7 +1334,7 @@ namespace SingletonPattern
                 }
                 else if (num == 108)
                 {
-                    ShowSelection("( ´Ù½Ã ½ÃµµÇÑ´Ù. )");
+                    ShowSelection("( ë‹¤ì‹œ ì‹œë„í•œë‹¤. )");
                     _storyNum = 99;
                 }
                 else if (num == 109)
@@ -1274,7 +1362,7 @@ namespace SingletonPattern
                 }
                 else if (num == 114)
                 {
-                    ShowSelection("¡°¾Æ´Ï¾ß, °á±¹¿£ ¹Ìµµ¸®¿¤µµ ´«Ä¡Ã«À» °Å¶ó°í »ı°¢ÇØ.¡±", "¡°ÀßÇÏ°í ½ÍÀº ¸¶À½¿¡ ÃÖ¼±À» ´ÙÇÏ´Ù º¸´Ï ÁÖº¯¿¡ ½Å°æÀ» ¸ø½èÀ» »ÓÀÌ´Ï±î.¡±");
+                    ShowSelection("â€œì•„ë‹ˆì•¼, ê²°êµ­ì—” ë¯¸ë„ë¦¬ì—˜ë„ ëˆˆì¹˜ì±˜ì„ ê±°ë¼ê³  ìƒê°í•´.â€", "â€œì˜í•˜ê³  ì‹¶ì€ ë§ˆìŒì— ìµœì„ ì„ ë‹¤í•˜ë‹¤ ë³´ë‹ˆ ì£¼ë³€ì— ì‹ ê²½ì„ ëª»ì¼ì„ ë¿ì´ë‹ˆê¹Œ.â€");
                 }
                 else if (num == 115)
                 {
@@ -1291,7 +1379,7 @@ namespace SingletonPattern
                 }
                 else if (num == 118)
                 {
-                    ShowSelection("¡°¾ğ´Ï?¡±");
+                    ShowSelection("â€œì–¸ë‹ˆ?â€");
                 }
                 else if (num == 119)
                 {
@@ -1305,7 +1393,7 @@ namespace SingletonPattern
                 }
                 else if (num == 123)
                 {
-                    ShowSelection("¡°µ¿»ıÀº ¿©½ÅÀÎµ¥, ¾ğ´Ï´Â ¸¶¿ÕÀÌ¶ó´Ï¡¦¡¦¡±");
+                    ShowSelection("â€œë™ìƒì€ ì—¬ì‹ ì¸ë°, ì–¸ë‹ˆëŠ” ë§ˆì™•ì´ë¼ë‹ˆâ€¦â€¦â€");
                 }
                 else if (num == 124)
                 {
@@ -1318,7 +1406,7 @@ namespace SingletonPattern
                 }
                 else if (num == 126)
                 {
-                    ShowSelection("¡°¹Ìµµ¸®¿¤Àº ¾ğ´Ï¶û »çÀÌ°¡ ÁÁÁö ¾ÊÀº °Å¾ß?¡±");
+                    ShowSelection("â€œë¯¸ë„ë¦¬ì—˜ì€ ì–¸ë‹ˆë‘ ì‚¬ì´ê°€ ì¢‹ì§€ ì•Šì€ ê±°ì•¼?â€");
                 }
                 else if (num == 127)
                 {
@@ -1335,11 +1423,11 @@ namespace SingletonPattern
                 }
                 else if (num == 132)
                 {
-                    ShowSelection("¡°¾Æ´Ï¾ß. ÇüÁ¦ÀÚ¸Å³¢¸® ´ÙÅõ´Â ÀÏÀº Á¾Á¾ ÀÖ´Â ÀÏÀÌÁö.¡±");
+                    ShowSelection("â€œì•„ë‹ˆì•¼. í˜•ì œìë§¤ë¼ë¦¬ ë‹¤íˆ¬ëŠ” ì¼ì€ ì¢…ì¢… ìˆëŠ” ì¼ì´ì§€.â€");
                 }
                 else if (num == 133)
                 {
-                    ShowSelection("¡°¾Æ¸¶ ³ª»Ú±â¸¸ ÇÑ ÀÏÀº ¾Æ´Ï¾úÀ» °Å¾ß.¡±", "¡°¿·¿¡¼­ °ÔÀÓÇÏ´Â °ÍÀ» ÁöÄÑº¸´Â °Íµµ Àç¹ÌÀÖÀİ¾Æ.¡±");
+                    ShowSelection("â€œì•„ë§ˆ ë‚˜ì˜ê¸°ë§Œ í•œ ì¼ì€ ì•„ë‹ˆì—ˆì„ ê±°ì•¼.â€", "â€œì˜†ì—ì„œ ê²Œì„í•˜ëŠ” ê²ƒì„ ì§€ì¼œë³´ëŠ” ê²ƒë„ ì¬ë¯¸ìˆì–ì•„.â€");
                 }
                 else if (num == 134)
                 {
@@ -1347,7 +1435,7 @@ namespace SingletonPattern
                 }
                 else if (num == 135)
                 {
-                    ShowSelection("¡°±×¸®°í ´Ù¸¥ »ç¶÷ÀÇ ÇÃ·¹ÀÌ¸¦ º¸¸é¼­ ±ú´İ°Ô µÇ´Â Á¡µµ ÀÖÁö.¡±", "¡°³ª´Â ÀÌ·¸°Ô ÇÃ·¹ÀÌÇÏ´Âµ¥, ÀÌ »ç¶÷Àº ÀÌ·¸°Ô ÇÏ´Â±¸³ª, ÇÏ°í.¡±");
+                    ShowSelection("â€œê·¸ë¦¬ê³  ë‹¤ë¥¸ ì‚¬ëŒì˜ í”Œë ˆì´ë¥¼ ë³´ë©´ì„œ ê¹¨ë‹«ê²Œ ë˜ëŠ” ì ë„ ìˆì§€.â€", "â€œë‚˜ëŠ” ì´ë ‡ê²Œ í”Œë ˆì´í•˜ëŠ”ë°, ì´ ì‚¬ëŒì€ ì´ë ‡ê²Œ í•˜ëŠ”êµ¬ë‚˜, í•˜ê³ .â€");
                 }
                 else if (num == 136)
                 {
@@ -1370,15 +1458,15 @@ namespace SingletonPattern
                 }
                 else if (num == 140)
                 {
-                    ShowSelection("¡°¹Ìµµ¸®¿¤ÀÇ ÀÌ¸§À» µî·ÏÇÑ´Ù.¡±");
+                    ShowSelection("â€œë¯¸ë„ë¦¬ì—˜ì˜ ì´ë¦„ì„ ë“±ë¡í•œë‹¤.â€");
                 }
                 else if (num == 142)
                 {
-                    ShowSelection("¡°¾îÂ¿ ¼ö ¾øÀÌ ¹Ìµµ¸®±îÁö¸¸ ÀÔ·ÂÇÑ´Ù.¡±");
+                    ShowSelection("â€œì–´ì©” ìˆ˜ ì—†ì´ ë¯¸ë„ë¦¬ê¹Œì§€ë§Œ ì…ë ¥í•œë‹¤.â€");
                 }
                 else if (num == 144)
                 {
-                    ShowSelection("¡°¹Ìµµ¸®¿¤ÀÌ ´Ü¼­¸¦ ¾Ë·ÁÁÖÁö ¾Ê¾Ò´õ¶ó¸é¡±", "¡°³ªµµ ÇÏÀÌ ½ºÄÚ¾î¸¦ ´Ş¼ºÇÒ ¼ö ¾ø¾úÀ» Å×´Ï±î.¡±");
+                    ShowSelection("â€œë¯¸ë„ë¦¬ì—˜ì´ ë‹¨ì„œë¥¼ ì•Œë ¤ì£¼ì§€ ì•Šì•˜ë”ë¼ë©´â€", "â€œë‚˜ë„ í•˜ì´ ìŠ¤ì½”ì–´ë¥¼ ë‹¬ì„±í•  ìˆ˜ ì—†ì—ˆì„ í…Œë‹ˆê¹Œ.â€");
                 }
                 else if (num == 145)
                 {
@@ -1392,7 +1480,7 @@ namespace SingletonPattern
                 }
                 else if (num == 147)
                 {
-                    ShowSelection("¡°¹Ì, ¹Ìµµ¸®¿¤!?¡±");
+                    ShowSelection("â€œë¯¸, ë¯¸ë„ë¦¬ì—˜!?â€");
                 }
                 else if (num == 150)
                 {
@@ -1420,13 +1508,17 @@ namespace SingletonPattern
                 {
                     _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().DOColor(Color.black, 2);
                 }
-                else if (num == 153) // ¸ŞÀÎÈ­¸éÀ¸·Î ÀÌµ¿
+                else if (num == 153) // ë©”ì¸í™”ë©´ìœ¼ë¡œ ì´ë™
                 {
-                    _gameManager.DoFinishStory(1);
+                    CheckAutoProgress();
+
+                    _gameManager.DoFinishStory(0);
+
+                    yield break;
                 }
             }
 
-            if (_isSelectionOn) yield break;  // ¼±ÅÃÁö¸¦ º¸¿©ÁÙ ¶§ ´ëÈ­Ã¢ °»½ÅÇÏÁö ¾Êµµ·Ï Ã¼Å©
+            if (_isSelectionOn) yield break;  // ì„ íƒì§€ë¥¼ ë³´ì—¬ì¤„ ë•Œ ëŒ€í™”ì°½ ê°±ì‹ í•˜ì§€ ì•Šë„ë¡ ì²´í¬
 
             _canProgress = true;
 
@@ -1479,20 +1571,20 @@ namespace SingletonPattern
             }
         }
 
-        // ´ëÈ­¸¦ ÇÑ ±ÛÀÚ¾¿ Ãâ·ÂÇØÁÖ´Â ÇÔ¼ö(±âº»)
+        // ëŒ€í™”ë¥¼ í•œ ê¸€ìì”© ì¶œë ¥í•´ì£¼ëŠ” í•¨ìˆ˜(ê¸°ë³¸)
         private IEnumerator SetTextBoxCoroutine(int num)
         {
             if (_characterNameList.Count <= num) yield break;
             _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(false);
 
-            // ÀÌ¸§ ±æÀÌ¿¡ µû¶ó ¼Ò¼Ó Ç¥½Ã À§Ä¡ º¯°æ
-            if (_characterName.GetComponent<TMP_Text>().text.Length != _characterNameList[num].Length) // ÀÌ¸§ ±æÀÌ°¡ º¯°æµÇ¾úÀ» ¶§¸¸ µ¿ÀÛ
+            // ì´ë¦„ ê¸¸ì´ì— ë”°ë¼ ì†Œì† í‘œì‹œ ìœ„ì¹˜ ë³€ê²½
+            if (_characterName.GetComponent<TMP_Text>().text.Length != _characterNameList[num].Length) // ì´ë¦„ ê¸¸ì´ê°€ ë³€ê²½ë˜ì—ˆì„ ë•Œë§Œ ë™ì‘
             {
                 _departmentName.GetComponent<RectTransform>().anchoredPosition = new Vector2(-457 + ((_characterNameList[num].Length - 2) * 52), _departmentName.GetComponent<RectTransform>().anchoredPosition.y);
             }
 
-            // ¾ê±â ÁßÀÎ ÇĞ»ıÀÇ ÀÌ¹ÌÁö¸¦ ¹à°Ô, ¾ê±âÇÏ°í ÀÖÁö ¾ÊÀº ÇĞ»ıÀÇ ÀÌ¹ÌÁö¸¦ ¾îµÓ°Ô º¯°æ
-            if (_characterNameList[num] == "¸ğ¸ğÀÌ")
+            // ì–˜ê¸° ì¤‘ì¸ í•™ìƒì˜ ì´ë¯¸ì§€ë¥¼ ë°ê²Œ, ì–˜ê¸°í•˜ê³  ìˆì§€ ì•Šì€ í•™ìƒì˜ ì´ë¯¸ì§€ë¥¼ ì–´ë‘¡ê²Œ ë³€ê²½
+            if (_characterNameList[num] == "ëª¨ëª¨ì´")
             {
                 _momoiCharacterImage.color = new Color(1, 1, 1, _momoiCharacterImage.color.a);
                 _momoiHaloImage.color = new Color(1, 1, 1, _momoiHaloImage.color.a);
@@ -1506,7 +1598,7 @@ namespace SingletonPattern
                 _yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuCharacterImage.color.a);
                 _yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuHaloImage.color.a);
             }
-            else if (_characterNameList[num] == "¹Ìµµ¸®")
+            else if (_characterNameList[num] == "ë¯¸ë„ë¦¬")
             {
                 _momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiCharacterImage.color.a);
                 _momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiHaloImage.color.a);
@@ -1520,7 +1612,7 @@ namespace SingletonPattern
                 _yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuCharacterImage.color.a);
                 _yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuHaloImage.color.a);
             }
-            else if (_characterNameList[num] == "¾Æ¸®½º")
+            else if (_characterNameList[num] == "ì•„ë¦¬ìŠ¤")
             {
                 _momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiCharacterImage.color.a);
                 _momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiHaloImage.color.a);
@@ -1534,7 +1626,7 @@ namespace SingletonPattern
                 _yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuCharacterImage.color.a);
                 _yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuHaloImage.color.a);
             }
-            else if (_characterNameList[num] == "À¯Áî")
+            else if (_characterNameList[num] == "ìœ ì¦ˆ")
             {
                 _momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiCharacterImage.color.a);
                 _momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiHaloImage.color.a);
@@ -1552,36 +1644,36 @@ namespace SingletonPattern
 
             _characterName.GetComponent<TMP_Text>().text = _characterNameList[num];
             _departmentName.GetComponent<TMP_Text>().text = _departmentNameList[num];
-            _dialog.GetComponent<TMP_Text>().text = "";
+            _dialogText.GetComponent<TMP_Text>().text = "";
             _isStoryProgressing = true;
             float textSpeed = _textSpeedList[num];
             for (int i = 0; i < _dialogList[num].Length; i++)
             {
-                _dialog.GetComponent<TMP_Text>().text += _dialogList[num][i];
+                _dialogText.GetComponent<TMP_Text>().text += _dialogList[num][i];
                 yield return new WaitForSeconds(0.05f / textSpeed);
             }
             _storyNum++;
-            DoStoryJump(); // ¼±ÅÃÁö·Î °¥¸° ½ºÅä¸® ¹øÈ£ ÀÌµ¿ Ã¼Å©
+            DoStoryJump(); // ì„ íƒì§€ë¡œ ê°ˆë¦° ìŠ¤í† ë¦¬ ë²ˆí˜¸ ì´ë™ ì²´í¬
 
             _isStoryProgressing = false;
             _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(true);
         }
 
-        // ´ëÈ­ ³ª¿À°í ÀÖÀ» ¶§ Å¬¸¯ÇÏ¸é ÇÑ ¹ø¿¡ Ãâ·ÂµÇµµ·Ï ÇØÁÖ´Â ÇÔ¼ö
+        // ëŒ€í™” ë‚˜ì˜¤ê³  ìˆì„ ë•Œ í´ë¦­í•˜ë©´ í•œ ë²ˆì— ì¶œë ¥ë˜ë„ë¡ í•´ì£¼ëŠ” í•¨ìˆ˜
         private void SetTextBox(int num)
         {
             if (_characterNameList.Count <= num) return;
             _characterName.GetComponent<TMP_Text>().text = _characterNameList[num];
             _departmentName.GetComponent<TMP_Text>().text = _departmentNameList[num];
-            _dialog.GetComponent<TMP_Text>().text = _dialogList[num];
+            _dialogText.GetComponent<TMP_Text>().text = _dialogList[num];
             _storyNum++;
-            DoStoryJump(); // ¼±ÅÃÁö·Î °¥¸° ½ºÅä¸® ¹øÈ£ ÀÌµ¿ Ã¼Å©
+            DoStoryJump(); // ì„ íƒì§€ë¡œ ê°ˆë¦° ìŠ¤í† ë¦¬ ë²ˆí˜¸ ì´ë™ ì²´í¬
 
             _isStoryProgressing = false;
             _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(true);
         }
 
-        // ½ºÅä¸®¸¦ ÁøÇà½ÃÅ°´Â ÇÔ¼ö
+        // ìŠ¤í† ë¦¬ë¥¼ ì§„í–‰ì‹œí‚¤ëŠ” í•¨ìˆ˜
         public void DoStoryProgress()
         {
             if (!_canProgress)
@@ -1591,7 +1683,7 @@ namespace SingletonPattern
             StartCoroutine(DoStoryAction(_storyNum));
         }
 
-        // ½ºÅä¸®¿¡¼­ ÅØ½ºÆ®¸¦ ³ªÅ¸³»´Â ÇÔ¼ö
+        // ìŠ¤í† ë¦¬ì—ì„œ í…ìŠ¤íŠ¸ë¥¼ ë‚˜íƒ€ë‚´ëŠ” í•¨ìˆ˜
         private void ShowStoryText()
         {
             if (_isStoryProgressing)
@@ -1603,7 +1695,7 @@ namespace SingletonPattern
             _coroutineStoryProgress = StartCoroutine(SetTextBoxCoroutine(_storyNum));
         }
 
-        // ½ºÅä¸®¿¡ Ã³À½ ÁøÀÔÇßÀ» ¶§ ÀÛµ¿ÇÏ´Â ÇÔ¼ö
+        // ìŠ¤í† ë¦¬ì— ì²˜ìŒ ì§„ì…í–ˆì„ ë•Œ ì‘ë™í•˜ëŠ” í•¨ìˆ˜
         public IEnumerator DoEpisodeStart()
         {
             _story.SetActive(true);
@@ -1614,9 +1706,9 @@ namespace SingletonPattern
             yield return new WaitForSeconds(6.5f);
             _episodeStartWindowFadeOut.DOFade(1, 2);
 
-            // ¿©±âºÎÅÍ ½ºÅä¸® ÃÊ±â ¼¼ÆÃ
+            // ì—¬ê¸°ë¶€í„° ìŠ¤í† ë¦¬ ì´ˆê¸° ì„¸íŒ…
 
-            _dialog.GetComponent<TMP_Text>().fontSize = 42.5f;
+            _dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
             SetCharacterImage(_momoi, 0);
             SetCharacterImage(_midori, 0);
             SetCharacterImage(_aris, 0);
@@ -1641,7 +1733,7 @@ namespace SingletonPattern
             _aris.SetActive(false);
             _yuzu.SetActive(false);
 
-            // ¿©±â±îÁö ½ºÅä¸® ÃÊ±â ¼¼ÆÃ
+            // ì—¬ê¸°ê¹Œì§€ ìŠ¤í† ë¦¬ ì´ˆê¸° ì„¸íŒ…
 
             yield return new WaitForSeconds(2.5f);
             _story.transform.Find("Episode").gameObject.SetActive(true);

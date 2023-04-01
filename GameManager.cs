@@ -1,4 +1,4 @@
-using DG.Tweening;
+ï»¿using DG.Tweening;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -25,11 +25,21 @@ namespace SingletonPattern
         private TMP_Text _guideText;
         private GameObject _option;
         private GameObject _selectStage;
+        private GameObject _startBtn;
+        private GameObject _optionBtn;
+        private GameObject _gameQuitBtn;
+
         private Button _tempBtn;
 
         [Header("Select Stage Sprite")]
         [SerializeField] Sprite _stageEnterImage;
         [SerializeField] Sprite _storyReadImage;
+        [SerializeField] Sprite _stageEnterImageJapanese;
+        [SerializeField] Sprite _stageEnterLockedImageJapanse;
+
+        [Header("Font")]
+        [SerializeField] TMP_FontAsset _japaneseFontWithUnderlay;
+        [SerializeField] TMP_FontAsset _japaneseFont;
 
         AudioManager _audioManager;
         StoryManager _storyManager;
@@ -39,16 +49,20 @@ namespace SingletonPattern
 
         public override void Awake()
         {
-            _audioManager = AudioManager.Instance;
-            _storyManager = StoryManager.Instance;
-            _shootingGameManager = ShootingGameManager.Instance;
+            if(_audioManager == null) _audioManager = AudioManager.Instance;
+            if(_storyManager == null) _storyManager = StoryManager.Instance;
+            if(_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
 
             _guideText = _canvas.transform.Find("Main/GuideText").GetComponent<TMP_Text>();
             _option = _canvas.transform.Find("Option").gameObject;
             _selectStage = _canvas.transform.Find("SelectStage").gameObject;
             _tempBtn = _canvas.transform.Find("Main/TempBtn").GetComponent<Button>();
 
-            // ÃÊ±â PlayerPrefs ¼³Á¤
+            _startBtn = _canvas.transform.Find("Main/StartBtn").gameObject;
+            _optionBtn = _canvas.transform.Find("Main/OptionBtn").gameObject;
+            _gameQuitBtn = _canvas.transform.Find("Main/GameQuitBtn").gameObject;
+
+            // ì´ˆê¸° PlayerPrefs ì„¤ì •
             if (!PlayerPrefs.HasKey("Language")) PlayerPrefs.SetString("Language", "Korean");
             if (!PlayerPrefs.HasKey("BGM")) PlayerPrefs.SetFloat("BGM", 1);
             if (!PlayerPrefs.HasKey("SFX")) PlayerPrefs.SetFloat("SFX", 1);
@@ -71,11 +85,11 @@ namespace SingletonPattern
         {
             if (Input.GetMouseButtonUp(0))
             {
-                _tempBtn.Select(); // ¸¶¿ì½º¸¦ Å¬¸¯ÇÑ µÚ ´Ù¸¥ ÁöÁ¡À¸·Î ÀÌµ¿ÇØ¼­ ¶ÃÀ» ¶§ ´Ù¸¥ ¹öÆ°À» ¼±ÅÃÇÏ¿© ¾Ö´Ï¸ŞÀÌ¼Ç Á¤»óÈ­
+                _tempBtn.Select(); // ë§ˆìš°ìŠ¤ë¥¼ í´ë¦­í•œ ë’¤ ë‹¤ë¥¸ ì§€ì ìœ¼ë¡œ ì´ë™í•´ì„œ ë—ì„ ë•Œ ë‹¤ë¥¸ ë²„íŠ¼ì„ ì„ íƒí•˜ì—¬ ì• ë‹ˆë©”ì´ì…˜ ì •ìƒí™”
             }
         }
 
-        // ½ºÅä¸®ºÎÅÍ ½ÃÀÛÇÒ ¶§´Â Àá±ñ ·ÎµùÀ» °®µµ·Ï ÇÔ
+        // ìŠ¤í† ë¦¬ë¶€í„° ì‹œì‘í•  ë•ŒëŠ” ì ê¹ ë¡œë”©ì„ ê°–ë„ë¡ í•¨
         private IEnumerator DoLoading()
         {
             if (_startFrom == StartFrom.intro) StartCoroutine(DoOpening());
@@ -90,19 +104,19 @@ namespace SingletonPattern
             }
         }
 
-        // °ÔÀÓÀÌ Ã³À½ºÎÅÍ ½ÃÀÛÇÒ ¶§ ¿ÀÇÁ´×À» º¸¿©ÁÜ
+        // ê²Œì„ì´ ì²˜ìŒë¶€í„° ì‹œì‘í•  ë•Œ ì˜¤í”„ë‹ì„ ë³´ì—¬ì¤Œ
         private IEnumerator DoOpening()
         {
             Image aronaImage = _canvas.transform.Find("Main/Arona").GetComponent<Image>();
 
-            // ½ÃÀÛÇÒ ¶§ ÇÊ¿ä¾ø´Â °Íµé ÇØÁ¦
-            _canvas.transform.Find("Main/StartBtn").gameObject.SetActive(false);
-            _canvas.transform.Find("Main/OptionBtn").gameObject.SetActive(false);
-            _canvas.transform.Find("Main/GameQuitBtn").gameObject.SetActive(false);
+            // ì‹œì‘í•  ë•Œ í•„ìš”ì—†ëŠ” ê²ƒë“¤ í•´ì œ
+            _startBtn.SetActive(false);
+            _optionBtn.SetActive(false);
+            _gameQuitBtn.SetActive(false);
             _storyManager._story.SetActive(false);
             _option.SetActive(false);
 
-            // À¯Àú°¡ ¼³Á¤ÇÑ Á¤º¸ ºÒ·¯¿Í¼­ Àû¿ë
+            // ìœ ì €ê°€ ì„¤ì •í•œ ì •ë³´ ë¶ˆëŸ¬ì™€ì„œ ì ìš©
             if (PlayerPrefs.HasKey("BGM"))
             {
                 float bgm = PlayerPrefs.GetFloat("BGM");
@@ -130,7 +144,80 @@ namespace SingletonPattern
                     _option.transform.Find("OptionWindow/FPS/FPS60Btn/Selected").gameObject.SetActive(true);
                 }
             }
-            // if (PlayerPrefs.HasKey("Language"));
+            if (PlayerPrefs.HasKey("Language"))
+            {
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    _canvas.transform.Find("Option/OptionWindow/Language/KoreanBtn/Selected").gameObject.SetActive(true);
+                    _canvas.transform.Find("Option/OptionWindow/Language/JapaneseBtn/Selected").gameObject.SetActive(false);
+
+                    _canvas.transform.Find("Story/Episode/Dialog/CharacterName").GetComponent<RectTransform>().anchoredPosition = new Vector2(-622, -266);
+                    _canvas.transform.Find("Story/Episode/Dialog/DepartmentName").GetComponent<RectTransform>().anchoredPosition = new Vector2(-405, -279);
+                    _canvas.transform.Find("Story/Episode/Dialog/DialogText").GetComponent<RectTransform>().anchoredPosition = new Vector2(-14, -433);
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    _canvas.transform.Find("Option/OptionWindow/Language/KoreanBtn/Selected").gameObject.SetActive(false);
+                    _canvas.transform.Find("Option/OptionWindow/Language/JapaneseBtn/Selected").gameObject.SetActive(true);
+
+                    GameObject selection1Btn = _storyManager._selection1Btn.transform.GetChild(0).gameObject;
+                    GameObject selection1_1Btn = _storyManager._selection1_1Btn.transform.GetChild(0).gameObject;
+                    GameObject selection1_2Btn = _storyManager._selection1_2Btn.transform.GetChild(0).gameObject;
+
+                    // ìŠ¤í† ë¦¬ ë¡œì»¬ë¼ì´ì§•
+                    DoLocalizing(_storyManager._characterName.GetComponent<TMP_Text>(), _japaneseFontWithUnderlay, "", -24);
+                    _storyManager._characterName.GetComponent<TMP_Text>().characterSpacing = -4.5f;
+
+                    DoLocalizing(_storyManager._departmentName.GetComponent<TMP_Text>(), _japaneseFontWithUnderlay, "", -19);
+                    _storyManager._departmentName.GetComponent<TMP_Text>().characterSpacing = -4.5f;
+
+                    DoLocalizing(_storyManager._dialogText.GetComponent<TMP_Text>(), _japaneseFontWithUnderlay, "", -17);
+                    _storyManager._dialogText.GetComponent<TMP_Text>().characterSpacing = -4.5f;
+                    _storyManager._dialogText.GetComponent<TMP_Text>().lineSpacing = 0;
+
+                    DoLocalizing(selection1Btn.GetComponent<TMP_Text>(), _japaneseFont);
+                    DoLocalizing(selection1_1Btn.GetComponent<TMP_Text>(), _japaneseFont);
+                    DoLocalizing(selection1_2Btn.GetComponent<TMP_Text>(), _japaneseFont);
+
+                    DoLocalizing(_storyManager._windowText, _japaneseFont);
+                    DoLocalizing(_storyManager._gameOver2Text, _japaneseFont, "ãƒ—ãƒ‹ãƒ—ãƒ‹ï¼šã©ã‚Œã ã‘å‰£è¡“ã‚’é›ãˆãŸã¨ã“ã‚ã§ã€æˆ‘ãŒéŠƒã®å‰ã§ã¯ç„¡åŠ›â€¦â€¦ãµã£ã€‚");
+
+                    // ì¸íŠ¸ë¡œ ~ ë©”ì¸í™”ë©´ ë¡œì»¬ë¼ì´ì§•
+
+                    DoLocalizing(_guideText, _japaneseFont, "ã“ã®ã‚²ãƒ¼ãƒ ã¯Nexon Gamesã§é–‹ç™ºã—ãŸãƒ–ãƒ«ãƒ¼ã‚¢ãƒ¼ã‚«ã‚¤ãƒ–ã®\nãƒ•ã‚¡ãƒ³ãƒ¡ã‚¤ãƒ‰ã‚²ãƒ¼ãƒ ã§ã€å…¬å¼ã‚³ãƒ³ãƒ†ãƒ³ãƒ„ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚");
+
+                    DoLocalizing(_startBtn.transform.GetChild(0).GetComponent<TMP_Text>(), _japaneseFontWithUnderlay, "ã‚¹ã‚¿ãƒ¼ãƒˆ");
+                    DoLocalizing(_optionBtn.transform.GetChild(0).GetComponent<TMP_Text>(), _japaneseFontWithUnderlay, "ã‚ªãƒ—ã‚·ãƒ§ãƒ³");
+                    DoLocalizing(_gameQuitBtn.transform.GetChild(0).GetComponent<TMP_Text>(), _japaneseFontWithUnderlay, "ã‚²ãƒ¼ãƒ çµ‚äº†");
+
+                    DoLocalizing(_option.transform.Find("OptionWindow/Language/Text").GetComponent<TMP_Text>(), _japaneseFont, "è¨€èª", -13);
+                    DoLocalizing(_option.transform.Find("OptionWindow/OptionText").GetComponent<TMP_Text>(), _japaneseFont, "ã‚ªãƒ—ã‚·ãƒ§ãƒ³", -20);
+                    DoLocalizing(_option.transform.Find("OptionWindow/SFXSlider/Text").GetComponent<TMP_Text>(), _japaneseFont, "åŠ¹æœéŸ³", -13);
+
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/ChapterName").GetComponent<TMP_Text>(), _japaneseFont, "ãƒ¬ãƒˆãƒ­ãƒãƒƒã‚¯ãƒ»ãƒ­ãƒãƒ³");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/ChapterContents").GetComponent<TMP_Text>(), _japaneseFont,
+                        "ã‚²ãƒ¼ãƒ é–‹ç™ºéƒ¨ã§é–‹ç™ºã—ãŸãƒ†ã‚¤ãƒ«ã‚ºãƒ»ã‚µã‚¬ãƒ»ã‚¯ãƒ­ãƒ‹ã‚¯ãƒ«ã‚’ãƒ—ãƒ¬ã‚¤ã™ã‚‹ã“ã¨ã«ãªã‚Šã¾ã—ãŸã€‚ã€Œä»Šå¹´ã®ã‚¯ã‚½ã‚²ãƒ¼ãƒ©ãƒ³ã‚­ãƒ³ã‚°ï¼‘ä½ã€ã®ã‚²ãƒ¼ãƒ ã‚’ç„¡äº‹ã«ã‚¯ãƒªã‚¢ã§ãã¾ã—ã‚‡ã†ã‹ï¼Ÿ");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/ChapterNumber").GetComponent<TMP_Text>(), _japaneseFont, "1ç« ");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/EpisodeList").GetComponent<TMP_Text>(), _japaneseFont, "ã‚¨ãƒ”ã‚½ãƒ¼ãƒ‰ãƒªã‚¹ãƒˆ");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/StageAllClear").GetComponent<TMP_Text>(), _japaneseFont, "ã™ã¹ã¦ã®ã‚¨ãƒ”ã‚½ãƒ¼ãƒ‰ã‚’ã‚¯ãƒªã‚¢ã—ã¾ã—ãŸã€‚");
+                    _selectStage.transform.Find("SelectStageWindow/ChapterContents").GetComponent<TMP_Text>().lineSpacing = 0;
+                    _selectStage.transform.Find("SelectStageWindow/ChapterContents").GetComponent<TMP_Text>().characterSpacing = -5;
+
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/Stage1/StageName").GetComponent<TMP_Text>(), _japaneseFont, "ãƒ†ã‚¤ãƒ«ã‚ºãƒ»ã‚µã‚¬ãƒ»ã‚¯ãƒ­ãƒ‹ã‚¯ãƒ«");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/Stage2/StageName").GetComponent<TMP_Text>(), _japaneseFont, "ï¼Ÿï¼Ÿï¼Ÿ");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/Stage3/StageName").GetComponent<TMP_Text>(), _japaneseFont, "ï¼Ÿï¼Ÿï¼Ÿ");
+                    DoLocalizing(_selectStage.transform.Find("SelectStageWindow/Stage4/StageName").GetComponent<TMP_Text>(), _japaneseFont, "ï¼Ÿï¼Ÿï¼Ÿ");
+                    _selectStage.transform.Find("SelectStageWindow/Stage1/StageName").GetComponent<TMP_Text>().characterSpacing = -13;
+
+                    _selectStage.transform.Find("SelectStageWindow/Stage1/Stage1Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                    _selectStage.transform.Find("SelectStageWindow/Stage2/Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterLockedImageJapanse;
+                    _selectStage.transform.Find("SelectStageWindow/Stage3/Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterLockedImageJapanse;
+                    _selectStage.transform.Find("SelectStageWindow/Stage4/Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterLockedImageJapanse;
+
+                    DoLocalizing(_canvas.transform.Find("Story/EpisodeStart/Text/ChapterNumber").GetComponent<TMP_Text>(), _japaneseFont, "ç¬¬1è©±");
+                    DoLocalizing(_canvas.transform.Find("Story/EpisodeStart/Text/ChapterName").GetComponent<TMP_Text>(), _japaneseFont, "ãƒ†ã‚¤ãƒ«ã‚ºãƒ»ã‚µã‚¬ãƒ»ã‚¯ãƒ­ãƒ‹ã‚¯ãƒ«");
+                }
+            }
 
             aronaImage.gameObject.SetActive(true);
             aronaImage.color = new Color(1, 1, 1, 0);
@@ -163,16 +250,33 @@ namespace SingletonPattern
             _canvas.transform.Find("Main/GameQuitBtn/Text").GetComponent<TMP_Text>().DOFade(1, 1);
         }
 
-        // ½ºÅä¸® ½ÃÀÛ ¹öÆ°À» ´­·¶À» ¶§ ÀÛµ¿
+        private void DoLocalizing(TMP_Text textObject, TMP_FontAsset font, string text = "", float yPosition = -10)
+        {
+            textObject.font = font;
+            textObject.text = text;
+
+            textObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(textObject.GetComponent<RectTransform>().anchoredPosition.x, textObject.GetComponent<RectTransform>().anchoredPosition.y + yPosition);
+        }
+
+        // ìŠ¤í† ë¦¬ ì‹œì‘ ë²„íŠ¼ì„ ëˆŒë €ì„ ë•Œ ì‘ë™
         public void DoStartStory(int storyNum)
         {
             GameObject episodeStartText = _canvas.transform.Find("Story/EpisodeStart/Text").gameObject;
 
             if (storyNum == 0)
             {
-                _storyManager.SetStoryNumber(storyNum); // 1È­ ½ÃÀÛ ºÎºĞ
-                episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "Á¦1È­";
-                episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "Å×ÀÏÁî »ç°¡ Å©·Î´ÏÅ¬";
+                _storyManager.SetStoryNumber(storyNum); // 1í™” ì‹œì‘ ë¶€ë¶„
+                
+                if(PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "ì œ1í™”";
+                    episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "í…Œì¼ì¦ˆ ì‚¬ê°€ í¬ë¡œë‹ˆí´";
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "ç¬¬1è©±";
+                    episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "ãƒ†ã‚¤ãƒ«ã‚ºãƒ»ã‚µã‚¬ãƒ»ã‚¯ãƒ­ãƒ‹ã‚¯ãƒ«";
+                }
             }
             else if (storyNum == 1)
             {
@@ -181,9 +285,24 @@ namespace SingletonPattern
                     _audioManager.PlaySFX("ButtonCancel");
                     return;
                 }
-                _storyManager.SetStoryNumber(45); // 2È­ ½ÃÀÛ ºÎºĞ
-                episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "Á¦2È­";
-                episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "¸ğÇèÀÇ ½ÃÀÛ";
+                // í˜„ì¬ ì¼ë³¸ì–´ 1ì¥ê¹Œì§€ë§Œ ë²ˆì—­ë˜ì–´ìˆìŒ
+                if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    _audioManager.PlaySFX("ButtonCancel");
+                    return;
+                }
+                    _storyManager.SetStoryNumber(45); // 2í™” ì‹œì‘ ë¶€ë¶„
+
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "ì œ2í™”";
+                    episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "ëª¨í—˜ì˜ ì‹œì‘";
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "ç¬¬2è©±";
+                    episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "å†’é™ºã®ã¯ã˜ã¾ã‚Š";
+                }
             }
             else if (storyNum == 2)
             {
@@ -192,14 +311,14 @@ namespace SingletonPattern
                     _audioManager.PlaySFX("ButtonCancel");
                     return;
                 }
-                // ÇöÀç 3È­ ¹Ì±¸Çö
+                // í˜„ì¬ 3í™” ë¯¸êµ¬í˜„
                 _audioManager.PlaySFX("ButtonCancel");
                 return;
 
                 /*
-                _storyManager.SetStoryNumber(0); // 3È­ ½ÃÀÛ ºÎºĞ
-                episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "Á¦3È­";
-                episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "Á¦3È­";
+                _storyManager.SetStoryNumber(0); // 3í™” ì‹œì‘ ë¶€ë¶„
+                episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "ì œ3í™”";
+                episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "ì œ3í™”";
                 */
             }
             else if (storyNum == 3)
@@ -209,14 +328,14 @@ namespace SingletonPattern
                     _audioManager.PlaySFX("ButtonCancel");
                     return;
                 }
-                // ÇöÀç 4È­ ¹Ì±¸Çö
+                // í˜„ì¬ 4í™” ë¯¸êµ¬í˜„
                 _audioManager.PlaySFX("ButtonCancel");
                 return;
 
                 /*
-                _storyManager.SetStoryNumber(0); // 4È­ ½ÃÀÛ ºÎºĞ
-                episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "Á¦4È­";
-                episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "Á¦4È­";
+                _storyManager.SetStoryNumber(0); // 4í™” ì‹œì‘ ë¶€ë¶„
+                episodeStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "ì œ4í™”";
+                episodeStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "ì œ4í™”";
                 */
             }
             _isStartedStory = true;
@@ -224,7 +343,7 @@ namespace SingletonPattern
             StartCoroutine(_storyManager.DoEpisodeStart());
         }
 
-        // ½ºÅä¸®°¡ ³¡³µÀ» ¶§ ÀÛµ¿
+        // ìŠ¤í† ë¦¬ê°€ ëë‚¬ì„ ë•Œ ì‘ë™
         public void DoFinishStory(int storyNum)
         {
             _isStartedStory = false;
@@ -235,28 +354,52 @@ namespace SingletonPattern
             SetSelectStage();
         }
 
-        // ½ºÅ×ÀÌÁö¸¦ Å¬¸®¾îÇÏ¸é ´ÙÀ½ ½ºÅ×ÀÌÁö¸¦ ¿ÀÇÂÇÔ
+        // ìŠ¤í…Œì´ì§€ë¥¼ í´ë¦¬ì–´í•˜ë©´ ë‹¤ìŒ ìŠ¤í…Œì´ì§€ë¥¼ ì˜¤í”ˆí•¨
         public void SetSelectStage()
         {
             if (PlayerPrefs.HasKey("Stage1Cleared"))
             {
                 GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage2").gameObject;
-                stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "¸ğÇèÀÇ ½ÃÀÛ";
-                stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ëª¨í—˜ì˜ ì‹œì‘";
+                    stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "å†’é™ºã®å§‹ã¾ã‚Š";
+                    stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                }
                 _selectStage.transform.Find("SelectStageWindow/Stage1/StageRead").GetComponent<Image>().sprite = _storyReadImage;
             }
             if (PlayerPrefs.HasKey("Stage2Cleared"))
             {
                 GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage3").gameObject;
-                stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "½ºÅ×ÀÌÁö3";
-                stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ìŠ¤í…Œì´ì§€3";
+                    stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ã‚¹ãƒ†ãƒ¼ã‚¸ï¼“";
+                    stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                }
                 _selectStage.transform.Find("SelectStageWindow/Stage2/StageRead").GetComponent<Image>().sprite = _storyReadImage;
             }
             if (PlayerPrefs.HasKey("Stage3Cleared"))
             {
                 GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage4").gameObject;
-                stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "½ºÅ×ÀÌÁö4";
-                stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ìŠ¤í…Œì´ì§€4";
+                    stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ã‚¹ãƒ†ãƒ¼ã‚¸ï¼”";
+                    stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                }
                 _selectStage.transform.Find("SelectStageWindow/Stage3/StageRead").GetComponent<Image>().sprite = _storyReadImage;
             }
             if (PlayerPrefs.HasKey("Stage4Cleared"))
@@ -266,7 +409,7 @@ namespace SingletonPattern
             }
         }
 
-        // ½´ÆÃ °ÔÀÓÀ» ½ÃÀÛÇÔ
+        // ìŠˆíŒ… ê²Œì„ì„ ì‹œì‘í•¨
         public void DoStartShootingGame()
         {
             _canvas.transform.Find("Game1").gameObject.SetActive(true);
@@ -274,7 +417,7 @@ namespace SingletonPattern
             _shootingGameManager.SetInitial();
         }
 
-        // ½´ÆÃ °ÔÀÓÀ» Á¾·áÇÔ
+        // ìŠˆíŒ… ê²Œì„ì„ ì¢…ë£Œí•¨
         public void DoFinishShootingGame()
         {
             _canvas.transform.Find("Game1").gameObject.SetActive(false);

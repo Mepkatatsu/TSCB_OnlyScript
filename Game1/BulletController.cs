@@ -12,7 +12,7 @@ public class BulletController : MonoBehaviour
 
     private void Awake()
     {
-        _shootingGameManager = ShootingGameManager.Instance;
+        if(_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
     }
 
     public void SetCanAttack(bool canAttack)
