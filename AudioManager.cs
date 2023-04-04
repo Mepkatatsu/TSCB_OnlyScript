@@ -42,11 +42,6 @@ namespace SingletonPattern
             SetBGMVolume(PlayerPrefs.GetFloat("BGM"));
         }
 
-        public float GetBGMVolume()
-        {
-            return _bgmPlayer.volume;
-        }
-
         public void PlayBGM(string p_bgmName)
         {
             _isBGMChanged = true;
@@ -88,6 +83,11 @@ namespace SingletonPattern
             }
             Debug.Log(p_sfxName + " 이름의 효과음이 없습니다.");
             return;
+        }
+
+        public float GetBGMVolume()
+        {
+            return _bgmPlayer.volume;
         }
 
         public void SetBGMVolume(float volume)

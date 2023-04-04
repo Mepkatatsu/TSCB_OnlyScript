@@ -21,18 +21,7 @@ public class EnemyController : MonoBehaviour
         if (_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
     }
 
-    public void SetEnemyMaxHP()
-    {
-        _enemyHP = _enemyMaxHP;
-    }
-
-    public void StopMoving()
-    {
-        StopAllCoroutines();
-        _sequence.Kill();
-    }
-
-    public void SetInitialEnemySetting()
+    public void InitializeEnemy()
     {
         StopAllCoroutines();
 
@@ -47,6 +36,18 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    public void SetEnemyMaxHP()
+    {
+        _enemyHP = _enemyMaxHP;
+    }
+
+    public void StopMoving()
+    {
+        StopAllCoroutines();
+        _sequence.Kill();
+    }
+
+    #region Boss enemy action
     private IEnumerator DoBossAttack()
     {
         while(true)
@@ -96,16 +97,6 @@ public class EnemyController : MonoBehaviour
             .Append(gameObject.GetComponent<RectTransform>().DOLocalMoveX(-300, 4).SetEase(Ease.Linear)).SetLoops(-1);
     }
 
-    public int GetEnemyHP()
-    {
-        return _enemyHP;
-    }
-
-    public void SetEnemyHP(int hp)
-    {
-        _enemyHP = hp;
-    }
-
     private IEnumerator DoEnemyAttack()
     {
         while(true)
@@ -128,7 +119,9 @@ public class EnemyController : MonoBehaviour
             }
         }
     }
+    #endregion Boss enemy action
 
+    #region Normal enemy action
     /*
     public IEnumerator DoBezierCurves(Vector2 startPosition, Vector2 controlPosition, Vector2 targetPosition)
     {
@@ -153,7 +146,12 @@ public class EnemyController : MonoBehaviour
     }
     */
 
-    public IEnumerator DoBezierCurves2(Vector2 startPosition, Vector2 controlPosition1, Vector2 controlPosition2, Vector2 targetPosition, float speed)
+    public void DoBezierCurves2(Vector2 startPosition, Vector2 controlPosition1, Vector2 controlPosition2, Vector2 targetPosition, float speed)
+    {
+        StartCoroutine(DoBezierCurves2Coroutine(startPosition, controlPosition1, controlPosition2, targetPosition, speed));
+    }
+
+    public IEnumerator DoBezierCurves2Coroutine(Vector2 startPosition, Vector2 controlPosition1, Vector2 controlPosition2, Vector2 targetPosition, float speed)
     {
         float time = 0;
 
@@ -163,11 +161,9 @@ public class EnemyController : MonoBehaviour
 
             if (!gameObject.activeSelf) yield break;
 
-            if (gameObject.GetComponent<RectTransform>().anchoredPosition == targetPosition)
+            if (time >= 1)
             {
-                gameObject.GetComponent<RectTransform>().anchoredPosition = startPosition;
-                StartCoroutine(DoBezierCurves2(startPosition, controlPosition1, controlPosition2, targetPosition, speed));
-                yield break;
+                time = 0;
             }
 
             Vector2 position1 = Vector2.Lerp(startPosition, controlPosition1, time);
@@ -182,7 +178,6 @@ public class EnemyController : MonoBehaviour
             yield return null;
         }
     }
-
     public void DoEnemyMove(Vector2 startPosition, Vector2 direction, float time)
     {
         StartCoroutine(DoEnemyMoveCoroutine(startPosition, direction, time));
@@ -200,5 +195,16 @@ public class EnemyController : MonoBehaviour
 
             gameObject.GetComponent<RectTransform>().anchoredPosition = startPosition;
         }
+    }
+    #endregion Normal enemy action
+
+    public int GetEnemyHP()
+    {
+        return _enemyHP;
+    }
+
+    public void SetEnemyHP(int hp)
+    {
+        _enemyHP = hp;
     }
 }

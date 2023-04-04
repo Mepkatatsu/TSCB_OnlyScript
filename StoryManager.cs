@@ -10,6 +10,7 @@ namespace SingletonPattern
 {
     public class StoryManager : Singleton<StoryManager>
     {
+        #region Variables
         GameManager _gameManager;
         AudioManager _audioManager;
 
@@ -103,6 +104,7 @@ namespace SingletonPattern
         private bool _isPressedButton = false;       // 버튼이 눌렀는지 확인
 
         private int _autoStoryNum = 0;
+        #endregion Variables
 
         public override void Awake()
         {
@@ -138,22 +140,56 @@ namespace SingletonPattern
             _gameOver2Text = _story.transform.Find("Episode/WindowText_GameOver2").GetComponent<TMP_Text>();
         }
 
-        // 해당 캐릭터의 이펙트 애니메이션을 재생하는 함수
-        private void PlayCharacterEffectAnimation(GameObject characterName, string animationName)
+        // 스토리에 처음 진입했을 때 작동하는 함수
+        public IEnumerator InitializeStory()
         {
-            characterName.transform.Find($"{animationName}Parent/{animationName}").GetComponent<Animator>().Play(animationName);
-            _audioManager.PlaySFX(animationName);
+            _story.SetActive(true);
+            _episodeStartWindowFadeOut.color = new Color(1, 1, 1, 0);
+            _story.transform.Find("EpisodeStart").gameObject.SetActive(true);
+            _story.transform.Find("Episode").gameObject.SetActive(false);
+            StartCoroutine(_audioManager.FadeOutMusic());
+            yield return new WaitForSeconds(6.5f);
+            _episodeStartWindowFadeOut.DOFade(1, 2);
+
+            // 여기부터 스토리 초기 세팅
+
+            _dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
+            SetCharacterImage(_momoi, 0);
+            SetCharacterImage(_midori, 0);
+            SetCharacterImage(_aris, 0);
+            SetCharacterImage(_yuzu, 0);
+            _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = new Color(1, 1, 1, 0);
+            _momoi.SetActive(false);
+            _midori.SetActive(false);
+            _aris.SetActive(false);
+            _yuzu.SetActive(false);
+
+            _momoiCharacterImage.color = new Color(1, 1, 1, 0);
+            _momoiHaloImage.color = new Color(1, 1, 1, 0);
+            _midoriCharacterImage.color = new Color(1, 1, 1, 0);
+            _midoriHaloImage.color = new Color(1, 1, 1, 0);
+            _arisCharacterImage.color = new Color(1, 1, 1, 0);
+            _arisHaloImage.GetComponent<Image>().color = new Color(1, 1, 1, 0);
+            _yuzuCharacterImage.color = new Color(1, 1, 1, 0);
+            _yuzuHaloImage.color = new Color(1, 1, 1, 0);
+
+            _momoi.SetActive(false);
+            _midori.SetActive(false);
+            _aris.SetActive(false);
+            _yuzu.SetActive(false);
+
+            // 여기까지 스토리 초기 세팅
+
+            yield return new WaitForSeconds(2.5f);
+            _story.transform.Find("Episode").gameObject.SetActive(true);
+            _story.transform.Find("Episode/UI").gameObject.SetActive(true);
+            _story.transform.Find("Episode/Dialog").gameObject.SetActive(true);
+            _story.transform.Find("Episode/EpisodeProgressBtn").gameObject.SetActive(true);
+            _canProgress = true;
+            DoStoryProgress();
         }
 
-        // 선택지로 갈린 스토리 번호 이동 체크하고 이동하는 함수
-        private void DoStoryJump()
-        {
-            if (_storyNum == 23)
-            {
-                _storyNum = 28;
-            }
-        }
-
+        #region Method for UI(Dialog, Button, Selection)
         // 대화창을 끄고 키는 함수
         private void SetDialogOn(bool isDialogOff)
         {
@@ -183,6 +219,15 @@ namespace SingletonPattern
             else
             {
                 DoStoryProgress();
+            }
+        }
+
+        // 선택지로 갈린 스토리 번호 이동 체크하고 이동하는 함수
+        private void DoStoryJump()
+        {
+            if (_storyNum == 23)
+            {
+                _storyNum = 28;
             }
         }
 
@@ -256,60 +301,6 @@ namespace SingletonPattern
             _selection1_2Btn.GetComponent<Animator>().Play("ButtonPopup");
         }
 
-        public IEnumerator ShowSadMidori()
-        {
-            if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Shiver")) yield break;
-
-            SetCharacterImage(_midori, 14);
-            _midori.GetComponent<Animator>().Play("Shiver");
-
-            yield return new WaitForSeconds(2f);
-
-            SetCharacterImage(_midori, 10);
-        }
-
-        // 학생들의 이미지를 변경해주는 함수
-        public IEnumerator ShowHappyMidori()
-        {
-            if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Jumping")) yield break;
-
-            SetCharacterImage(_midori, 13);
-            _midori.GetComponent<Animator>().Play("Jumping");
-
-            yield return new WaitForSeconds(1f);
-
-            SetCharacterImage(_midori, 10);
-        }
-
-        public void SetCharacterImage(GameObject characterName, int num)
-        {
-            if (characterName == _momoi)
-            {
-                _momoiCharacterImage.sprite = _momoiImage.imageArray[num];
-                // 모모이의 표정이 0번일 때는 눈을 깜빡이는 모션이 있음
-                if (num == 0)
-                {
-                    _momoiCharacterImage.GetComponent<Animator>().enabled = true;
-                }
-                else
-                {
-                    _momoiCharacterImage.GetComponent<Animator>().enabled = false;
-                }
-            }
-            else if (characterName == _midori)
-            {
-                _midoriCharacterImage.sprite = _midoriImage.imageArray[num];
-            }
-            else if (characterName == _aris)
-            {
-                _arisCharacterImage.sprite = _arisImage.imageArray[num];
-            }
-            else if (characterName == _yuzu)
-            {
-                _yuzuCharacterImage.sprite = _yuzuImage.imageArray[num];
-            }
-        }
-
         public bool CheckAutoProgress()
         {
             if (_isAutoStoryProgress)
@@ -363,37 +354,7 @@ namespace SingletonPattern
                 }
             }
         }
-
-        // GameManager에서 스토리 시작 번호를 지정할 때 사용하는 함수
-        public void SetStoryNumber(int num)
-        {
-            _storyNum = num;
-        }
-
-        // 외부에서 스토리를 진행할 수 있는 상태인지 여부를 변경하는 함수
-        public void SetIsCanProgress(bool isCanProgress)
-        {
-            this._canProgress = isCanProgress;
-        }
-
-        // 캐릭터 이름, 부서 이름, 대화 내용, 텍스트 속도를 간편하게 쓰고 저장하기 위한 함수
-        public void AppendDialog(string characterNameText, string departmentNameText, string dialogText, float textSpeed)
-        {
-            _characterNameList.Add(characterNameText);
-            _departmentNameList.Add(departmentNameText);
-            _dialogList.Add(dialogText);
-            _textSpeedList.Add(textSpeed); // 텍스트 속도 : (textSpeed) 배
-        }
-
-        private IEnumerator DoFadeEpisodeWindowFadeOut()
-        {
-            _WindowFadeOut.gameObject.SetActive(true);
-            DOTween.Sequence().Append(_WindowFadeOut.DOFade(1, 2f)).Append(_WindowFadeOut.DOFade(0, 2f));
-
-            yield return new WaitForSeconds(4);
-
-            _WindowFadeOut.gameObject.SetActive(false);
-        }
+        #endregion Method for UI(Dialog, Button, Selection)
 
         // 스토리 진행시 텍스트 외에 캐릭터 움직임, 효과음 등을 관리하는 파트
         private IEnumerator DoStoryAction(int num)
@@ -1525,41 +1486,64 @@ namespace SingletonPattern
             ShowStoryText();
         }
 
-        public void DoShootingGameEnd(string endType)
+        #region Method for DoStoryAction Method
+        public void SetCharacterImage(GameObject characterName, int num)
         {
-            StartCoroutine(DoShootingGameEndCoroutine(endType));
+            if (characterName == _momoi)
+            {
+                _momoiCharacterImage.sprite = _momoiImage.imageArray[num];
+                // 모모이의 표정이 0번일 때는 눈을 깜빡이는 모션이 있음
+                if (num == 0)
+                {
+                    _momoiCharacterImage.GetComponent<Animator>().enabled = true;
+                }
+                else
+                {
+                    _momoiCharacterImage.GetComponent<Animator>().enabled = false;
+                }
+            }
+            else if (characterName == _midori)
+            {
+                _midoriCharacterImage.sprite = _midoriImage.imageArray[num];
+            }
+            else if (characterName == _aris)
+            {
+                _arisCharacterImage.sprite = _arisImage.imageArray[num];
+            }
+            else if (characterName == _yuzu)
+            {
+                _yuzuCharacterImage.sprite = _yuzuImage.imageArray[num];
+            }
         }
 
-        public IEnumerator DoShootingGameEndCoroutine(string endType)
+        private IEnumerator DoFadeEpisodeWindowFadeOut()
         {
-            yield return new WaitForSeconds(2);
+            _WindowFadeOut.gameObject.SetActive(true);
+            DOTween.Sequence().Append(_WindowFadeOut.DOFade(1, 2f)).Append(_WindowFadeOut.DOFade(0, 2f));
 
-            StartCoroutine(DoFadeEpisodeWindowFadeOut());
+            yield return new WaitForSeconds(4);
 
-            yield return new WaitForSeconds(2);
+            _WindowFadeOut.gameObject.SetActive(false);
+        }
 
-            _audioManager.PlayBGM("RoundAndRound");
+        // 해당 캐릭터의 이펙트 애니메이션을 재생하는 함수
+        private void PlayCharacterEffectAnimation(GameObject characterName, string animationName)
+        {
+            characterName.transform.Find($"{animationName}Parent/{animationName}").GetComponent<Animator>().Play(animationName);
+            _audioManager.PlaySFX(animationName);
+        }
 
-            _gameManager.DoFinishShootingGame();
+        #endregion Method for DoStoryAction Method
 
-            _midori.SetActive(true);
-            _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-400, 0);
-            _midori.transform.parent.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+        #region Method for Text Process
 
-            if (endType.Equals("GameOver")) SetCharacterImage(_midori, 17);
-            else SetCharacterImage(_midori, 13);
-
-            yield return new WaitForSeconds(2);
-
-            SetDialogOn(true);
-            _gameManager._canvas.transform.Find("Story/Episode/UI").gameObject.SetActive(true);
-            _canProgress = true;
-
-            if (endType.Equals("GameOver")) _storyNum = 101;
-            else if (endType.Equals("GameWin")) _storyNum = 104;
-            else _storyNum = 109;
-
-            DoStoryProgress();
+        // 캐릭터 이름, 부서 이름, 대화 내용, 텍스트 속도를 간편하게 쓰고 저장하기 위한 함수
+        public void AppendDialog(string characterNameText, string departmentNameText, string dialogText, float textSpeed)
+        {
+            _characterNameList.Add(characterNameText);
+            _departmentNameList.Add(departmentNameText);
+            _dialogList.Add(dialogText);
+            _textSpeedList.Add(textSpeed); // 텍스트 속도 : (textSpeed) 배
         }
 
         private IEnumerator AppendTextOneByOne(TMP_Text textBox, string text, float textSpeed)
@@ -1569,6 +1553,18 @@ namespace SingletonPattern
                 textBox.text += text[i];
                 yield return new WaitForSeconds(0.05f / textSpeed);
             }
+        }
+
+        // 스토리에서 텍스트를 나타내는 함수
+        private void ShowStoryText()
+        {
+            if (_isStoryProgressing)
+            {
+                StopCoroutine(_coroutineStoryProgress);
+                SetTextBox(_storyNum);
+                return;
+            }
+            _coroutineStoryProgress = StartCoroutine(SetTextBoxCoroutine(_storyNum));
         }
 
         // 대화를 한 글자씩 출력해주는 함수(기본)
@@ -1673,6 +1669,73 @@ namespace SingletonPattern
             _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(true);
         }
 
+        #endregion Method for Text Process
+
+        #region Method for ShootingGame
+
+        public IEnumerator ShowSadMidori()
+        {
+            if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Shiver")) yield break;
+
+            SetCharacterImage(_midori, 14);
+            _midori.GetComponent<Animator>().Play("Shiver");
+
+            yield return new WaitForSeconds(2f);
+
+            SetCharacterImage(_midori, 10);
+        }
+
+        public IEnumerator ShowHappyMidori()
+        {
+            if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Jumping")) yield break;
+
+            SetCharacterImage(_midori, 13);
+            _midori.GetComponent<Animator>().Play("Jumping");
+
+            yield return new WaitForSeconds(1f);
+
+            SetCharacterImage(_midori, 10);
+        }
+
+        public void DoShootingGameEnd(string endType)
+        {
+            StartCoroutine(DoShootingGameEndCoroutine(endType));
+        }
+
+        public IEnumerator DoShootingGameEndCoroutine(string endType)
+        {
+            yield return new WaitForSeconds(2);
+
+            StartCoroutine(DoFadeEpisodeWindowFadeOut());
+
+            yield return new WaitForSeconds(2);
+
+            _audioManager.PlayBGM("RoundAndRound");
+
+            _gameManager.DoFinishShootingGame();
+
+            _midori.SetActive(true);
+            _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-400, 0);
+            _midori.transform.parent.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+
+            if (endType.Equals("GameOver")) SetCharacterImage(_midori, 17);
+            else SetCharacterImage(_midori, 13);
+
+            yield return new WaitForSeconds(2);
+
+            SetDialogOn(true);
+            _gameManager._canvas.transform.Find("Story/Episode/UI").gameObject.SetActive(true);
+            _canProgress = true;
+
+            if (endType.Equals("GameOver")) _storyNum = 101;
+            else if (endType.Equals("GameWin")) _storyNum = 104;
+            else _storyNum = 109;
+
+            DoStoryProgress();
+        }
+
+        #endregion Method For ShootingGame
+
         // 스토리를 진행시키는 함수
         public void DoStoryProgress()
         {
@@ -1683,65 +1746,16 @@ namespace SingletonPattern
             StartCoroutine(DoStoryAction(_storyNum));
         }
 
-        // 스토리에서 텍스트를 나타내는 함수
-        private void ShowStoryText()
+        // GameManager에서 스토리 시작 번호를 지정할 때 사용하는 함수
+        public void SetStoryNumber(int num)
         {
-            if (_isStoryProgressing)
-            {
-                StopCoroutine(_coroutineStoryProgress);
-                SetTextBox(_storyNum);
-                return;
-            }
-            _coroutineStoryProgress = StartCoroutine(SetTextBoxCoroutine(_storyNum));
+            _storyNum = num;
         }
 
-        // 스토리에 처음 진입했을 때 작동하는 함수
-        public IEnumerator DoEpisodeStart()
+        // 외부에서 스토리를 진행할 수 있는 상태인지 여부를 변경하는 함수
+        public void SetIsCanProgress(bool isCanProgress)
         {
-            _story.SetActive(true);
-            _episodeStartWindowFadeOut.color = new Color(1, 1, 1, 0);
-            _story.transform.Find("EpisodeStart").gameObject.SetActive(true);
-            _story.transform.Find("Episode").gameObject.SetActive(false);
-            StartCoroutine(_audioManager.FadeOutMusic());
-            yield return new WaitForSeconds(6.5f);
-            _episodeStartWindowFadeOut.DOFade(1, 2);
-
-            // 여기부터 스토리 초기 세팅
-
-            _dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
-            SetCharacterImage(_momoi, 0);
-            SetCharacterImage(_midori, 0);
-            SetCharacterImage(_aris, 0);
-            SetCharacterImage(_yuzu, 0);
-            _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = new Color(1, 1, 1, 0);
-            _momoi.SetActive(false);
-            _midori.SetActive(false);
-            _aris.SetActive(false);
-            _yuzu.SetActive(false);
-
-            _momoiCharacterImage.color = new Color(1, 1, 1, 0);
-            _momoiHaloImage.color = new Color(1, 1, 1, 0);
-            _midoriCharacterImage.color = new Color(1, 1, 1, 0);
-            _midoriHaloImage.color = new Color(1, 1, 1, 0);
-            _arisCharacterImage.color = new Color(1, 1, 1, 0);
-            _arisHaloImage.GetComponent<Image>().color = new Color(1, 1, 1, 0);
-            _yuzuCharacterImage.color = new Color(1, 1, 1, 0);
-            _yuzuHaloImage.color = new Color(1, 1, 1, 0);
-
-            _momoi.SetActive(false);
-            _midori.SetActive(false);
-            _aris.SetActive(false);
-            _yuzu.SetActive(false);
-
-            // 여기까지 스토리 초기 세팅
-
-            yield return new WaitForSeconds(2.5f);
-            _story.transform.Find("Episode").gameObject.SetActive(true);
-            _story.transform.Find("Episode/UI").gameObject.SetActive(true);
-            _story.transform.Find("Episode/Dialog").gameObject.SetActive(true);
-            _story.transform.Find("Episode/EpisodeProgressBtn").gameObject.SetActive(true);
-            _canProgress = true;
-            DoStoryProgress();
+            _canProgress = isCanProgress;
         }
     }
 }

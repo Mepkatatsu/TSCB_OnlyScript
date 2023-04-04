@@ -7,6 +7,13 @@ public class DialogManager : MonoBehaviour
 {
     StoryManager _storyManager;
 
+    void Awake()
+    {
+        _storyManager = StoryManager.Instance;
+
+        InitializeDialog();
+    }
+
     // 스토리 내용을 순서대로 저장함
     private void InitializeDialog()
     {
@@ -332,12 +339,4 @@ public class DialogManager : MonoBehaviour
                                                         // 2장 종료
         }
     }
-
-    void Awake()
-    {
-        _storyManager = StoryManager.Instance;
-
-        InitializeDialog();
-    }
-
 }

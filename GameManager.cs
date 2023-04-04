@@ -11,6 +11,7 @@ namespace SingletonPattern
 {
     public class GameManager : Singleton<GameManager>
     {
+        #region Variables
         enum StartFrom
         {
             intro, story, Game1
@@ -47,6 +48,18 @@ namespace SingletonPattern
 
         private bool _isStartedStory = false;
 
+        #endregion Variables
+
+        void Update()
+        {
+            if (Input.GetMouseButtonUp(0))
+            {
+                _tempBtn.Select(); // 마우스를 클릭한 뒤 다른 지점으로 이동해서 뗐을 때 다른 버튼을 선택하여 애니메이션 정상화
+            }
+        }
+
+        #region Initialize Game
+
         public override void Awake()
         {
             if(_audioManager == null) _audioManager = AudioManager.Instance;
@@ -74,19 +87,11 @@ namespace SingletonPattern
             if (_startFrom == StartFrom.Game1)
             {
                 _canvas.transform.Find("Game1").gameObject.SetActive(true);
-                _shootingGameManager.SetInitial();
+                _shootingGameManager.InitializeShootingGame();
                 return;
             }
             StartCoroutine(DoLoading());
             SetSelectStage();
-        }
-
-        void Update()
-        {
-            if (Input.GetMouseButtonUp(0))
-            {
-                _tempBtn.Select(); // 마우스를 클릭한 뒤 다른 지점으로 이동해서 뗐을 때 다른 버튼을 선택하여 애니메이션 정상화
-            }
         }
 
         // 스토리부터 시작할 때는 잠깐 로딩을 갖도록 함
@@ -258,6 +263,64 @@ namespace SingletonPattern
             textObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(textObject.GetComponent<RectTransform>().anchoredPosition.x, textObject.GetComponent<RectTransform>().anchoredPosition.y + yPosition);
         }
 
+        #endregion Initialize Game
+
+        #region For StoryManager.cs
+        // 스테이지를 클리어하면 다음 스테이지를 오픈
+        public void SetSelectStage()
+        {
+            if (PlayerPrefs.HasKey("Stage1Cleared"))
+            {
+                GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage2").gameObject;
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "모험의 시작";
+                    stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "冒険の始まり";
+                    stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                }
+                _selectStage.transform.Find("SelectStageWindow/Stage1/StageRead").GetComponent<Image>().sprite = _storyReadImage;
+            }
+            if (PlayerPrefs.HasKey("Stage2Cleared"))
+            {
+                GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage3").gameObject;
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "스테이지3";
+                    stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ステージ３";
+                    stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                }
+                _selectStage.transform.Find("SelectStageWindow/Stage2/StageRead").GetComponent<Image>().sprite = _storyReadImage;
+            }
+            if (PlayerPrefs.HasKey("Stage3Cleared"))
+            {
+                GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage4").gameObject;
+                if (PlayerPrefs.GetString("Language").Equals("Korean"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "스테이지4";
+                    stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
+                }
+                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
+                {
+                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ステージ４";
+                    stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
+                }
+                _selectStage.transform.Find("SelectStageWindow/Stage3/StageRead").GetComponent<Image>().sprite = _storyReadImage;
+            }
+            if (PlayerPrefs.HasKey("Stage4Cleared"))
+            {
+                _selectStage.transform.Find("SelectStageWindow/Stage4/StageRead").GetComponent<Image>().sprite = _storyReadImage;
+                _selectStage.transform.Find("SelectStageWindow/StageAllClear").gameObject.SetActive(true);
+            }
+        }
+
         // 스토리 시작 버튼을 눌렀을 때 작동
         public void DoStartStory(int storyNum)
         {
@@ -340,7 +403,7 @@ namespace SingletonPattern
             }
             _isStartedStory = true;
             _audioManager.PlaySFX("ButtonStart");
-            StartCoroutine(_storyManager.DoEpisodeStart());
+            StartCoroutine(_storyManager.InitializeStory());
         }
 
         // 스토리가 끝났을 때 작동
@@ -353,68 +416,15 @@ namespace SingletonPattern
             PlayerPrefs.SetInt("Stage" + (storyNum + 1) + "Cleared", 1);
             SetSelectStage();
         }
+        #endregion For StoryManager.cs
 
-        // 스테이지를 클리어하면 다음 스테이지를 오픈함
-        public void SetSelectStage()
-        {
-            if (PlayerPrefs.HasKey("Stage1Cleared"))
-            {
-                GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage2").gameObject;
-                if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                {
-                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "모험의 시작";
-                    stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
-                }
-                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                {
-                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "冒険の始まり";
-                    stage.transform.Find("Stage2Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
-                }
-                _selectStage.transform.Find("SelectStageWindow/Stage1/StageRead").GetComponent<Image>().sprite = _storyReadImage;
-            }
-            if (PlayerPrefs.HasKey("Stage2Cleared"))
-            {
-                GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage3").gameObject;
-                if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                {
-                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "스테이지3";
-                    stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
-                }
-                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                {
-                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ステージ３";
-                    stage.transform.Find("Stage3Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
-                }
-                _selectStage.transform.Find("SelectStageWindow/Stage2/StageRead").GetComponent<Image>().sprite = _storyReadImage;
-            }
-            if (PlayerPrefs.HasKey("Stage3Cleared"))
-            {
-                GameObject stage = _selectStage.transform.Find("SelectStageWindow/Stage4").gameObject;
-                if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                {
-                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "스테이지4";
-                    stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImage;
-                }
-                else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                {
-                    stage.transform.Find("StageName").GetComponent<TMP_Text>().text = "ステージ４";
-                    stage.transform.Find("Stage4Enter").GetComponent<Button>().image.sprite = _stageEnterImageJapanese;
-                }
-                _selectStage.transform.Find("SelectStageWindow/Stage3/StageRead").GetComponent<Image>().sprite = _storyReadImage;
-            }
-            if (PlayerPrefs.HasKey("Stage4Cleared"))
-            {
-                _selectStage.transform.Find("SelectStageWindow/Stage4/StageRead").GetComponent<Image>().sprite = _storyReadImage;
-                _selectStage.transform.Find("SelectStageWindow/StageAllClear").gameObject.SetActive(true);
-            }
-        }
-
+        #region For ShootingGameManager.cs
         // 슈팅 게임을 시작함
         public void DoStartShootingGame()
         {
             _canvas.transform.Find("Game1").gameObject.SetActive(true);
 
-            _shootingGameManager.SetInitial();
+            _shootingGameManager.InitializeShootingGame();
         }
 
         // 슈팅 게임을 종료함
@@ -422,6 +432,7 @@ namespace SingletonPattern
         {
             _canvas.transform.Find("Game1").gameObject.SetActive(false);
         }
+        #endregion For ShootingGameManager.cs
 
         public IEnumerator FadeInImage(float timeSpeed, Image image)
         {
