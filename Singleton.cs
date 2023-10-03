@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SingletonPattern
@@ -10,19 +11,15 @@ namespace SingletonPattern
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = FindObjectOfType<T>();
+                if (_instance != null) 
+                    return _instance;
+                
+                _instance = FindObjectOfType<T>();
 
-                    if (_instance == null)
-                    {
-                        GameObject obj = new GameObject();
-                        obj.name = typeof(T).Name;
-                        _instance = obj.AddComponent<T>();
-                    }
-                }
-
-                return _instance;
+                if (_instance != null)
+                    return _instance;
+                
+                return null;
             }
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace SingletonPattern
@@ -13,8 +14,9 @@ namespace SingletonPattern
         #region Variables
         AudioManager _audioManager;
         StoryManager _storyManager;
-
+        
         [Header("Parents")]
+        [SerializeField] private GameObject shootingGameParent;
         [SerializeField] GameObject _bulletParent;
         [SerializeField] GameObject _aliveEnemyParent;
         [SerializeField] GameObject _deadEnemyParent;
@@ -29,7 +31,7 @@ namespace SingletonPattern
         [SerializeField] GameObject _bossMomoiHalo;
         [SerializeField] GameObject _bossYuzuHalo;
         [SerializeField] GameObject _bossArisHalo;
-        [SerializeField] GameObject _bossArisLazer;
+        [SerializeField] GameObject _bossArisLaser;
         [SerializeField] Slider _bossHPBar;
 
         [Header("Skills")]
@@ -55,7 +57,7 @@ namespace SingletonPattern
         [SerializeField] GameObject _explosionPrefab;
 
         [Header("Start Settings")]
-        [SerializeField] private int _startPhaseNum = 0;  // ÆäÀÌÁî (Àû µîÀå)
+        [SerializeField] private int _startPhaseNum = 0;  // í˜ì´ì¦ˆ (ì  ë“±ì¥)
 
         private Queue<GameObject> _midoriBulletQueue = new Queue<GameObject>();
         private Queue<GameObject> _midoriHaloQueue = new Queue<GameObject>();
@@ -70,46 +72,47 @@ namespace SingletonPattern
         private GameObject _yuzuGrenade;
 
         private int _phaseNum = 0;
-        private int _life = 2;      // ¸ñ¼û
-        private int _score = 0;     // Á¡¼ö
-        private int _leftEnemy = 0;  // ³²Àº ÀûÀÇ ¼ö
+        private int _life = 2;      // ëª©ìˆ¨
+        private int _score = 0;     // ì ìˆ˜
+        private int _leftEnemy = 0;  // ë‚¨ì€ ì ì˜ ìˆ˜
 
-        private float _moveSpeed;   // ÇÃ·¹ÀÌ¾î ÀÌµ¿ ¼Óµµ
-        private float _skill1Cooltime = 0;  // °ø°İ ÄğÅ¸ÀÓ
-        private float _skill2Cooltime = 0;  // ½ºÅ³ ÄğÅ¸ÀÓ
-        private float _yuzuBulletDuration = 0; // À¯Áî À¯ÅºÀÌ ³¯¾Æ°¡´Â ½Ã°£
+        private float _moveSpeed;   // í”Œë ˆì´ì–´ ì´ë™ ì†ë„
+        private float _skill1Cooltime = 0;  // ê³µê²© ì¿¨íƒ€ì„
+        private float _skill2Cooltime = 0;  // ìŠ¤í‚¬ ì¿¨íƒ€ì„
+        private float _yuzuBulletDuration = 0; // ìœ ì¦ˆ ìœ íƒ„ì´ ë‚ ì•„ê°€ëŠ” ì‹œê°„
+        private float _joystickInputX = 0;
+        private float _joystickInputY = 0;
 
-        private bool _isActivatingSkill = false;    // ½ºÅ³ ¹ßµ¿ ÁßÀÎÁö?
-        private bool _isReadySkill1 = false;        // °ø°İ ÁØºñ µÇ¾ú´ÂÁö?
-        private bool _isReadySkill2 = false;        // ½ºÅ³ ÁØºñ µÇ¾ú´ÂÁö?
-        private bool _isCanMove = true;             // ÇÃ·¹ÀÌ¾î ÀÌµ¿ °¡´ÉÇÑÁö?
-        private bool _isAlivePlane = true;          // ÇÃ·¹ÀÌ¾î »ıÁ¸ ÁßÀÎÁö?
-        private bool _isNewHighScore = false;       // ÃÖ°í Á¡¼ö¸¦ °»½ÅÇß´ÂÁö?
-        private bool _isShootingLazer = false;      // ÇöÀç º¸½º°¡ ·¹ÀÌÀú ½ºÅ³À» ¹ß»ç ÁßÀÎÁö?
-        private bool _isSpawnedBoss = false;        // º¸½º°¡ ½ºÆùµÇ¾ú´ÂÁö?
+        private bool _isActivatingSkill = false;    // ìŠ¤í‚¬ ë°œë™ ì¤‘ì¸ì§€?
+        private bool _isReadySkill1 = false;        // ê³µê²© ì¤€ë¹„ ë˜ì—ˆëŠ”ì§€?
+        private bool _isReadySkill2 = false;        // ìŠ¤í‚¬ ì¤€ë¹„ ë˜ì—ˆëŠ”ì§€?
+        private bool _isAvailableMove = true;             // í”Œë ˆì´ì–´ ì´ë™ ê°€ëŠ¥í•œì§€?
+        private bool _isNewHighScore = false;       // ìµœê³  ì ìˆ˜ë¥¼ ê°±ì‹ í–ˆëŠ”ì§€?
+        private bool _isSpawnedBoss = false;        // ë³´ìŠ¤ê°€ ìŠ¤í°ë˜ì—ˆëŠ”ì§€?
+        private bool _isPointDownAttackButton = false;
 
-        // ÃÑ¾ËÀÌ À¯ÁöµÇ¾î¾ß ÇÏ´Â ÃÖ¼Ò ½Ã°£: ½ºÅ³ »ç¿ë ½Ã Àû¿¡°Ô ÃÑ¾ËÀÌ ³¯¾Æ°¡´Â ÃÖ´ë ½Ã°£ + Àû »ç¸Á ´ë±â½Ã°£ 1ÃÊ
+        // ì´ì•Œì´ ìœ ì§€ë˜ì–´ì•¼ í•˜ëŠ” ìµœì†Œ ì‹œê°„: ìŠ¤í‚¬ ì‚¬ìš© ì‹œ ì ì—ê²Œ ì´ì•Œì´ ë‚ ì•„ê°€ëŠ” ìµœëŒ€ ì‹œê°„ + ì  ì‚¬ë§ ëŒ€ê¸°ì‹œê°„ 1ì´ˆ
         private const int MinimumTime = 2;
 
-        // ½ºÅ³1(°ø°İ), ½ºÅ³2 ÄğÅ¸ÀÓ
+        // ìŠ¤í‚¬1(ê³µê²©), ìŠ¤í‚¬2 ì¿¨íƒ€ì„
         private const float Skill1CoolTime = 0.3f;
         private const float Skill2CoolTime = 10f;
 
-        // Á¡¼ö °ü·Ã
+        // ì ìˆ˜ ê´€ë ¨
         private const int HitEnemyScore = 100;
         private const int KillEnemyScore = 500;
         private const int HighScore = 49000;
 
-        // È­¸é ¹üÀ§
+        // í™”ë©´ ë²”ìœ„
         public const int XLeftEnd = -400;
         public const int XRIghtEnd = 400;
         public const int YDownEnd = -570;
         public const int YUpEnd = 570;
 
-        // Àû °ü·Ã Á¤º¸
+        // ì  ê´€ë ¨ ì •ë³´
         private const int BossMaxHP = 50;
 
-        // ÃÑ¾Ë/Àû ÀÌµ¿ ¼Óµµ
+        // ì´ì•Œ/ì  ì´ë™ ì†ë„
         private const float MidoriBulletSpeed = 1.0f;
         private const float EnemyBulletSpeed = 1.0f;
         private const float PinkEnemySpeed = 1.0f;
@@ -119,7 +122,15 @@ namespace SingletonPattern
 
         #endregion Variables
 
-        // ±âÁî¸ğ
+        #region Properties
+
+        public bool IsAlivePlane { get; private set; } = true;
+
+        public bool IsShootingLaser { get; private set; }
+
+        #endregion Properties
+
+        // ê¸°ì¦ˆëª¨
         /*
         [SerializeField] Transform _p1, _p2, _p3, _p4;
         [SerializeField] public float _gizmoDetail;
@@ -151,6 +162,8 @@ namespace SingletonPattern
         }
         */
 
+        #region Unity Methods
+
         public override void Awake()
         {
             _audioManager = AudioManager.Instance;
@@ -161,76 +174,117 @@ namespace SingletonPattern
 
         private void Update()
         {
-            if (!_isCanMove) return;
+            if (!_isAvailableMove) return;
 
-            _moveSpeed = 300f * Time.deltaTime;
+            _moveSpeed = 400f * Time.deltaTime;
 
-            // »óÇÏÁÂ¿ì ÀÌµ¿, È­¸é ¹ÛÀ¸·Î ¹ş¾î³ªÁö ¾Êµµ·Ï ¿òÁ÷ÀÓ¿¡ Á¦ÇÑÀ» µÒ
-            if (Input.GetKey(KeyCode.UpArrow))
-            {
-                if (!(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.y >= 500))
-                {
-                    _midoriPlane.GetComponent<RectTransform>().anchoredPosition = new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x, _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y + _moveSpeed);
-                }
-            }
-            if (Input.GetKey(KeyCode.DownArrow))
-            {
-                if (!(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.y <= -500))
-                {
-                    _midoriPlane.GetComponent<RectTransform>().anchoredPosition = new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x, _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y - _moveSpeed);
-                }
-            }
-            if (Input.GetKey(KeyCode.LeftArrow))
-            {
-                if (!(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x <= -350))
-                {
-                    _midoriPlane.GetComponent<RectTransform>().anchoredPosition = new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x - _moveSpeed, _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y);
-                }
-            }
-            if (Input.GetKey(KeyCode.RightArrow))
-            {
-                if (!(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x >= 350))
-                {
-                    _midoriPlane.GetComponent<RectTransform>().anchoredPosition = new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x + _moveSpeed, _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y);
-                }
-            }
-            // ZÅ°¸¦ ´­·¯ ÃÑ¾ËÀ» ¹ß»ç
+            float inputX = Input.GetAxis("Horizontal");
+            float inputY = Input.GetAxis("Vertical");
+
+            Vector2 moveDirection = new Vector2(inputX, inputY).normalized;
+
+            if (_joystickInputX != 0 && _joystickInputY != 0) moveDirection = new Vector2(_joystickInputX, _joystickInputY);
+
+            if (moveDirection.x > 0 && _midoriPlane.GetComponent<RectTransform>().anchoredPosition.x >= 350) moveDirection.x = 0;
+            else if (moveDirection.x < 0 && _midoriPlane.GetComponent<RectTransform>().anchoredPosition.x < -350) moveDirection.x = 0;
+
+            if (moveDirection.y > 0 && _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y >= 500) moveDirection.y = 0;
+            else if (moveDirection.y < 0 && _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y <= -500) moveDirection.y = 0;
+
+            moveDirection = moveDirection.normalized;
+
+            _midoriPlane.GetComponent<RectTransform>().anchoredPosition += moveDirection * _moveSpeed;
+
+            // Zí‚¤ë¥¼ ëˆŒëŸ¬ ì´ì•Œì„ ë°œì‚¬
             if (Input.GetKey(KeyCode.Z))
             {
-                // °ø°İÀº ±âº»ÀûÀ¸·Î ¿¬Å¸ÇÏ±â ¶§¹®¿¡ °æ°í Ç¥½ÃÇÏÁö ¾Êµµ·Ï ÇÔ
-                if (_skill1Cooltime <= 0)
-                {
-                    _isReadySkill1 = false;
-                    _skill1Background.GetComponent<Image>().color = new Color(0, 0, 0, 0.8f);
-                    _skill1Cooltime = Skill1CoolTime;
-                    StartCoroutine(ShootMidoriBullet(new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x, 570)));
-                }
+                OnClickAttackButton();
             }
             if (Input.GetKeyDown(KeyCode.X))
             {
-                // ÄğÅ¸ÀÓ ÁßÀÌÁö ¾Ê°í, ÀûÀÌ ÇÏ³ª¶óµµ Á¸ÀçÇÒ ¶§ »ç¿ë °¡´É
-                if (_skill2Cooltime <= 0 && _aliveEnemyParent.transform.childCount > 0)
-                {
-                    _isReadySkill2 = false;
-                    _skill2Background.GetComponent<Image>().color = new Color(0, 0, 0, 0.8f);
-                    _skill2Cooltime = Skill2CoolTime;
-                    StartCoroutine(UseMidoriSkill());
-                }
-                // ÄğÅ¸ÀÓ Áß¿¡ °æ°íÀ½, ¸Ş¼¼Áö µî Ç¥½Ã
-                else if (_skill2Cooltime > 0)
-                {
-                    _audioManager.PlaySFX("Warning");
-                    _skillMessage.GetComponent<TMP_Text>().text = "Àç»ç¿ë ´ë±â ÁßÀÔ´Ï´Ù!";
-                    _skillMessage.GetComponent<Animator>().Play("TextFade");
-                }
-                // ÀûÀÌ ¾øÀ» °æ¿ì °æ°íÀ½, ¸Ş¼¼Áö µî Ç¥½Ã
-                else if (_aliveEnemyParent.transform.childCount == 0)
-                {
-                    _audioManager.PlaySFX("Warning");
-                    _skillMessage.GetComponent<TMP_Text>().text = "±ÙÃ³¿¡ ÀûÀÌ ¾ø½À´Ï´Ù!";
-                    _skillMessage.GetComponent<Animator>().Play("TextFade");
-                }
+                OnClickSkillButton();
             }
+        }
+
+        #endregion Unity Methods
+
+        public void OnClickAttackButton()
+        {
+            if (!_isAvailableMove) return;
+
+            // ê³µê²©ì€ ê¸°ë³¸ì ìœ¼ë¡œ ì—°íƒ€í•˜ê¸° ë•Œë¬¸ì— ê²½ê³  í‘œì‹œí•˜ì§€ ì•Šë„ë¡ í•¨
+            if (_skill1Cooltime <= 0)
+            {
+                _isReadySkill1 = false;
+                _skill1Background.GetComponent<Image>().color = new Color(0, 0, 0, 0.8f);
+                _skill1Cooltime = Skill1CoolTime;
+                StartCoroutine(ShootMidoriBullet(new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x, 570)));
+            }
+        }
+
+        public IEnumerator OnPointDownAttackButtonCoroutine()
+        {
+            while (_isPointDownAttackButton)
+            {
+                OnClickAttackButton();
+                yield return new WaitForSeconds(0.2f);
+            }
+        }
+
+        public void OnPointerDownAttackButton()
+        {
+            _isPointDownAttackButton = true;
+            StartCoroutine(OnPointDownAttackButtonCoroutine());
+        }
+
+        public void OnPointerUpAttackButton()
+        {
+            _isPointDownAttackButton = false;
+        }
+
+        public void OnClickSkillButton()
+        {
+            if (!_isAvailableMove) return;
+
+            // ì¿¨íƒ€ì„ ì¤‘ì´ì§€ ì•Šê³ , ì ì´ í•˜ë‚˜ë¼ë„ ì¡´ì¬í•  ë•Œ ì‚¬ìš© ê°€ëŠ¥
+            if (_skill2Cooltime <= 0 && _aliveEnemyParent.transform.childCount > 0)
+            {
+                _isReadySkill2 = false;
+                _skill2Background.GetComponent<Image>().color = new Color(0, 0, 0, 0.8f);
+                _skill2Cooltime = Skill2CoolTime;
+                StartCoroutine(UseMidoriSkill());
+            }
+            // ì¿¨íƒ€ì„ ì¤‘ì— ê²½ê³ ìŒ, ë©”ì„¸ì§€ ë“± í‘œì‹œ
+            else if (_skill2Cooltime > 0)
+            {
+                _audioManager.PlaySFX("Warning");
+                _skillMessage.GetComponent<TMP_Text>().text = "ì¬ì‚¬ìš© ëŒ€ê¸° ì¤‘ì…ë‹ˆë‹¤!";
+                _skillMessage.GetComponent<Animator>().Play("TextFade");
+            }
+            // ì ì´ ì—†ì„ ê²½ìš° ê²½ê³ ìŒ, ë©”ì„¸ì§€ ë“± í‘œì‹œ
+            else if (_aliveEnemyParent.transform.childCount == 0)
+            {
+                _audioManager.PlaySFX("Warning");
+                _skillMessage.GetComponent<TMP_Text>().text = "ê·¼ì²˜ì— ì ì´ ì—†ìŠµë‹ˆë‹¤!";
+                _skillMessage.GetComponent<Animator>().Play("TextFade");
+            }
+        }
+
+        public void SetJoystickInput(float inputX, float inputY)
+        {
+            _joystickInputX = inputX;
+            _joystickInputY = inputY;
+        }
+
+        public void StartShootingGame()
+        {
+            shootingGameParent.SetActive(true);
+            InitializeShootingGame();
+        }
+
+        public void StopShootingGame()
+        {
+            shootingGameParent.SetActive(false);
         }
 
         public void InitializeShootingGame()
@@ -250,15 +304,15 @@ namespace SingletonPattern
             _isActivatingSkill = false;
             _isReadySkill1 = false;
             _isReadySkill2 = false;
-            _isCanMove = true;
-            _isAlivePlane = true;
+            _isAvailableMove = true;
+            IsAlivePlane = true;
             _isNewHighScore = false;
-            _isShootingLazer = false;
+            IsShootingLaser = false;
             _isSpawnedBoss = false;
 
             _highScoreText.text = HighScore.ToString();
 
-            _bossEnemy.GetComponent<EnemyController>().SetEnemyMaxHP();
+            _bossEnemy.GetComponent<ShootingGameEnemy>().SetEnemyMaxHP();
             _bossHPBar.value = 1;
             _bossEnemy.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 650);
 
@@ -268,7 +322,7 @@ namespace SingletonPattern
             _midoriPlane.SetActive(true);
             _midoriPlane.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -500);
             _midoriPlane.GetComponent<Image>().color = Color.white;
-            _storyManager.SetCharacterImage(_storyManager._midori, 10);
+            _storyManager.SetCharacterImage(_storyManager.midori, 10);
 
             _lifeParent.transform.GetChild(0).gameObject.SetActive(true);
             _lifeParent.transform.GetChild(1).gameObject.SetActive(true);
@@ -289,7 +343,7 @@ namespace SingletonPattern
                 enemyList[i].SetActive(false);
                 EnqueEnemy(enemyList[i]);
                 enemyList[i].transform.SetParent(_deadEnemyParent.transform);
-                enemyList[i].GetComponent<EnemyController>().StopMoving();
+                enemyList[i].GetComponent<ShootingGameEnemy>().StopMoving();
             }
 
             _bossMidoriHalo.GetComponent<Image>().color = new Color(1, 1, 1, 0);
@@ -297,9 +351,9 @@ namespace SingletonPattern
             _bossYuzuHalo.GetComponent<Image>().color = new Color(1, 1, 1, 0);
             _bossArisHalo.GetComponent<Image>().color = new Color(1, 1, 1, 0);
 
-            _storyManager._midori.SetActive(true);
-            _storyManager._midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-600, 50);
-            _storyManager._midori.transform.parent.GetComponent<RectTransform>().localScale = new Vector2(0.8f, 0.8f);
+            _storyManager.midori.SetActive(true);
+            _storyManager.midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-600, 50);
+            _storyManager.midori.transform.parent.GetComponent<RectTransform>().localScale = new Vector2(0.8f, 0.8f);
 
             StartCoroutine(DoNextPhase());
             StartCoroutine(DoShootingGameTimer());
@@ -337,7 +391,7 @@ namespace SingletonPattern
             }
         }
 
-        // ÇÃ·¹ÀÌ¾î°¡ ¸ñ¼ûÀ» ÀüºÎ »ç¿ëÇÏ¿´À» ¶§ µ¿ÀÛ
+        // í”Œë ˆì´ì–´ê°€ ëª©ìˆ¨ì„ ì „ë¶€ ì‚¬ìš©í•˜ì˜€ì„ ë•Œ ë™ì‘
         private void DoGameOver()
         {
             _bossMomoiHalo.GetComponent<Image>().DOFade(0, 1);
@@ -345,7 +399,7 @@ namespace SingletonPattern
             _bossYuzuHalo.GetComponent<Image>().DOFade(0, 1);
             _bossArisHalo.GetComponent<Image>().DOFade(0, 1);
 
-            StartCoroutine(_audioManager.FadeOutMusic());
+            _audioManager.FadeOutMusic();
             _audioManager.PlaySFX("GameOver");
             _skillMessage.GetComponent<TMP_Text>().fontSize = 80;
             _skillMessage.GetComponent<TMP_Text>().text = "< GAME OVER >";
@@ -355,11 +409,11 @@ namespace SingletonPattern
             else _storyManager.DoShootingGameEnd("GameOver");
         }
 
-        // ÇÃ·¹ÀÌ¾î°¡ º¸½º¸¦ ¾²·¯¶ß·ÈÀ» ¶§ µ¿ÀÛ
+        // í”Œë ˆì´ì–´ê°€ ë³´ìŠ¤ë¥¼ ì“°ëŸ¬ëœ¨ë ¸ì„ ë•Œ ë™ì‘
         private IEnumerator DoGameWin()
         {
-            _isAlivePlane = false;
-            _isCanMove = false;
+            IsAlivePlane = false;
+            _isAvailableMove = false;
 
             List <GameObject> enemyList = new List<GameObject>();
 
@@ -377,7 +431,7 @@ namespace SingletonPattern
 
             for (int i = 0; i < enemyList.Count; i++)
             {
-                enemyList[i].GetComponent<EnemyController>().StopMoving();
+                enemyList[i].GetComponent<ShootingGameEnemy>().StopMoving();
                 if (!enemyList[i].activeSelf) continue;
                 enemyList[i].SetActive(false);
                 EnqueEnemy(enemyList[i]);
@@ -387,7 +441,7 @@ namespace SingletonPattern
                 yield return new WaitForSeconds(0.2f);
             }
 
-            StartCoroutine(_audioManager.FadeOutMusic());
+            _audioManager.FadeOutMusic();
             _audioManager.PlaySFX("Win");
             _skillMessage.GetComponent<TMP_Text>().fontSize = 80;
             _skillMessage.GetComponent<TMP_Text>().text = "<color=#FFE400>< VICTORY! ></color>";
@@ -490,12 +544,12 @@ namespace SingletonPattern
             }
             else
             {
-                Debug.Log("GetFrefab ÀÌ¸§ ¿À·ù");
+                Debug.Log("GetFrefab ì´ë¦„ ì˜¤ë¥˜");
                 return null;
             }
         }
 
-        // »õ·Î¿î Æø¹ß ÀÌ¹ÌÁö¸¦ ¸¸µë
+        // ìƒˆë¡œìš´ í­ë°œ ì´ë¯¸ì§€ë¥¼ ë§Œë“¬
         private GameObject CreateNewExplosion()
         {
             GameObject explosion = Instantiate(_explosionPrefab);
@@ -507,7 +561,7 @@ namespace SingletonPattern
             return explosion;
         }
 
-        // »õ·Î¿î ¹Ìµµ¸® ÇìÀÏ·Î¸¦ ¸¸µë
+        // ìƒˆë¡œìš´ ë¯¸ë„ë¦¬ í—¤ì¼ë¡œë¥¼ ë§Œë“¬
         private GameObject CreateNewMidoriHalo()
         {
             GameObject halo = Instantiate(_midoriHaloPrefab);
@@ -519,7 +573,7 @@ namespace SingletonPattern
             return halo;
         }
 
-        // »õ·Î¿î Àû ÃÑ¾ËÀ» ¸¸µë
+        // ìƒˆë¡œìš´ ì  ì´ì•Œì„ ë§Œë“¬
         private GameObject CreateNewEnemyBullet()
         {
             GameObject bullet = Instantiate(_enemyBulletPrefab);
@@ -530,7 +584,7 @@ namespace SingletonPattern
             return bullet;
         }
 
-        // »õ·Î¿î ¹Ìµµ¸®ÀÇ ÃÑ¾ËÀ» ¸¸µë
+        // ìƒˆë¡œìš´ ë¯¸ë„ë¦¬ì˜ ì´ì•Œì„ ë§Œë“¬
         private GameObject CreateNewMidoriBullet()
         {
             GameObject bullet = Instantiate(_midoriBulletPrefab);
@@ -541,7 +595,7 @@ namespace SingletonPattern
             return bullet;
         }
 
-        // ÀûÀ» ÁöÁ¤µÈ À§Ä¡¿¡ ¼ÒÈ¯
+        // ì ì„ ì§€ì •ëœ ìœ„ì¹˜ì— ì†Œí™˜
         private GameObject SpawnEnemy(string name, Vector2 position)
         {
             GameObject enemy = GetPrefab(name);
@@ -549,12 +603,12 @@ namespace SingletonPattern
             enemy.transform.SetParent(_aliveEnemyParent.transform);
             enemy.SetActive(true);
             enemy.GetComponent<RectTransform>().anchoredPosition = position;
-            enemy.GetComponent<EnemyController>().InitializeEnemy();
+            enemy.GetComponent<ShootingGameEnemy>().InitializeEnemy();
 
             return enemy;
         }
 
-        // »õ·Î¿î ÀûÀ» ¸¸µë
+        // ìƒˆë¡œìš´ ì ì„ ë§Œë“¬
         private GameObject CreateNewEnemy(string name)
         {
             GameObject enemy;
@@ -632,10 +686,10 @@ namespace SingletonPattern
 
             enemy = SpawnEnemy(enemyName, new Vector2(-300 + (spawnNum * 150), 600));
 
-            enemy.GetComponent<EnemyController>().DoEnemyMove(new Vector2(-300 + (spawnNum * 150), 600), new Vector2(-300 + (spawnNum * 150), -600), time);
+            enemy.GetComponent<ShootingGameEnemy>().DoEnemyMove(new Vector2(-300 + (spawnNum * 150), 600), new Vector2(-300 + (spawnNum * 150), -600), time);
         }
 
-        // ÀûÀÌ ½ºÆùµÇ´Â ¹øÈ£¿¡ µû¶ó À§Ä¡¿Í µ¿ÀÛ ºÎ¿©
+        // ì ì´ ìŠ¤í°ë˜ëŠ” ë²ˆí˜¸ì— ë”°ë¼ ìœ„ì¹˜ì™€ ë™ì‘ ë¶€ì—¬
         private void SpawnBezierCurveEnemy(string enemyName, int spawnNum, float speed)
         {
             GameObject enemy;
@@ -644,28 +698,28 @@ namespace SingletonPattern
             {
                 enemy = SpawnEnemy(enemyName, new Vector2(-300, 600));
 
-                enemy.GetComponent<EnemyController>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
+                enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
                         new Vector2(-400, 0), new Vector2(500, 600), new Vector2(300, -600), speed);
             }
             else if (spawnNum == 1)
             {
                 enemy = SpawnEnemy(enemyName, new Vector2(-150, 600));
 
-                enemy.GetComponent<EnemyController>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
+                enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
                         new Vector2(800, 0), new Vector2(-800, 0), new Vector2(150, -600), speed);
             }
             else if (spawnNum == 2)
             {
                 enemy = SpawnEnemy(enemyName, new Vector2(150, 600));
 
-                enemy.GetComponent<EnemyController>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
+                enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
                         new Vector2(-800, 0), new Vector2(800, 0), new Vector2(-150, -600), speed);
             }
             else if (spawnNum == 3)
             {
                 enemy = SpawnEnemy(enemyName, new Vector2(300, 600));
 
-                enemy.GetComponent<EnemyController>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
+                enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(enemy.GetComponent<RectTransform>().anchoredPosition,
                         new Vector2(400, 0), new Vector2(-500, 600), new Vector2(-300, -600), speed);
             }
         }
@@ -772,14 +826,14 @@ namespace SingletonPattern
             }
             else if (_phaseNum == 8)
             {
-                // º¸½º µîÀå
-                StartCoroutine(_audioManager.FadeOutMusic());
+                // ë³´ìŠ¤ ë“±ì¥
+                _audioManager.FadeOutMusic();
 
                 _isSpawnedBoss = true;
 
                 _bossEnemy.transform.SetParent(_aliveEnemyParent.transform);
                 _bossEnemy.SetActive(true);
-                _bossEnemy.GetComponent<EnemyController>().InitializeEnemy();
+                _bossEnemy.GetComponent<ShootingGameEnemy>().InitializeEnemy();
 
                 yield return new WaitForSeconds(1f);
 
@@ -790,7 +844,7 @@ namespace SingletonPattern
             }
             else
             {
-                // º¸½º µîÀå ÀÌÈÄ ¹İº¹
+                // ë³´ìŠ¤ ë“±ì¥ ì´í›„ ë°˜ë³µ
                 if (_phaseNum % 4 == 1)
                 {
                     for (int i = 0; i < 5; ++i)
@@ -851,12 +905,12 @@ namespace SingletonPattern
 
             yield return new WaitForSeconds(2);
 
-            _isCanMove = true;
+            _isAvailableMove = true;
 
-            // 1ÃÊ°£ ¹«Àû Àû¿ë
+            // 1ì´ˆê°„ ë¬´ì  ì ìš©
             yield return new WaitForSeconds(1);
 
-            _isAlivePlane = true;
+            IsAlivePlane = true;
         }
 
         private IEnumerator ShowExplosion(GameObject target)
@@ -874,11 +928,11 @@ namespace SingletonPattern
 
         public IEnumerator HitByEnemy(GameObject midoriPlane, GameObject enemy)
         {
-            if (!_isAlivePlane) yield break;
-            if (enemy.CompareTag("EnemyLazer") && !_isShootingLazer) yield break;
+            if (!IsAlivePlane) yield break;
+            if (enemy.CompareTag("EnemyLaser") && !IsShootingLaser) yield break;
 
-            _isCanMove = false;
-            _isAlivePlane = false;
+            _isAvailableMove = false;
+            IsAlivePlane = false;
 
 
             midoriPlane.GetComponent<Image>().color = Color.clear;
@@ -896,28 +950,28 @@ namespace SingletonPattern
 
         public IEnumerator HitByBullet(GameObject bullet, GameObject target)
         {
-            // ÀÌ¹Ì ÃÑ¾ËÀÌ °ø°İÇÑ »óÅÂ¶ó¸é °ø°İÀÌ ÀÛµ¿ÇÏÁö ¾Êµµ·Ï ÇÔ
-            if (!bullet.GetComponent<BulletController>().GetCanAttack()) yield break;
+            // ì´ë¯¸ ì´ì•Œì´ ê³µê²©í•œ ìƒíƒœë¼ë©´ ê³µê²©ì´ ì‘ë™í•˜ì§€ ì•Šë„ë¡ í•¨
+            if (!bullet.GetComponent<MidoriBullet>().GetIsAvailableAttack()) yield break;
 
-            // ÃÑ¾ËÀÌ ÀûÁßÇÏ¸é Åõ¸íÇÏ°Ô ÀÌ¹ÌÁö¸¦ ¹Ù²Ù°í, ÀûÁß »óÅÂ¸¦ º¯°æ (Active¸¦ false·Î ÇÏ¸é yield return ÀÌÈÄ È£ÃâÀÌ ºÒ°¡´ÉÇØÁü)
+            // ì´ì•Œì´ ì ì¤‘í•˜ë©´ íˆ¬ëª…í•˜ê²Œ ì´ë¯¸ì§€ë¥¼ ë°”ê¾¸ê³ , ì ì¤‘ ìƒíƒœë¥¼ ë³€ê²½ (Activeë¥¼ falseë¡œ í•˜ë©´ yield return ì´í›„ í˜¸ì¶œì´ ë¶ˆê°€ëŠ¥í•´ì§)
             bullet.GetComponent<Image>().color = Color.clear;
-            bullet.GetComponent<BulletController>().SetCanAttack(false);
+            bullet.GetComponent<MidoriBullet>().SetIsAvailableAttack(false);
 
-            // ¾Æ±º ÃÑ¾ËÀÌ ÀûÀ» °ø°İÇßÀ» ‹š
+            // ì•„êµ° ì´ì•Œì´ ì ì„ ê³µê²©í–ˆì„ ë–„
             if (target.CompareTag("PinkEnemy") || target.CompareTag("GreenEnemy") || target.CompareTag("YellowEnemy") || target.CompareTag("PurpleEnemy") || target.CompareTag("BossEnemy"))
             {
-                EnemyController enemyController = target.GetComponent<EnemyController>();
+                var shootingGameEnemy = target.GetComponent<ShootingGameEnemy>();
 
                 if (target.CompareTag("BossEnemy"))
                 {
-                    _bossHPBar.value = ((float)enemyController.GetEnemyHP() - 1) / BossMaxHP;
+                    _bossHPBar.value = ((float)shootingGameEnemy.EnemyHP - 1) / BossMaxHP;
                 }
 
-                if (enemyController.GetEnemyHP() > 1)
+                if (shootingGameEnemy.EnemyHP > 1)
                 {
                     AddScore(HitEnemyScore);
 
-                    enemyController.SetEnemyHP(enemyController.GetEnemyHP() - 1);
+                    shootingGameEnemy.SetEnemyHP(shootingGameEnemy.EnemyHP - 1);
                     _audioManager.PlaySFX("EnemyHit");
                 }
                 else
@@ -931,7 +985,7 @@ namespace SingletonPattern
 
                     AddScore(KillEnemyScore);
 
-                    enemyController.SetEnemyHP(enemyController.GetEnemyHP() - 1);
+                    shootingGameEnemy.SetEnemyHP(shootingGameEnemy.EnemyHP - 1);
 
                     StartCoroutine(_storyManager.ShowHappyMidori());
 
@@ -940,10 +994,10 @@ namespace SingletonPattern
                     _leftEnemy--;
                     if (_leftEnemy == 0 && !_isSpawnedBoss) StartCoroutine(DoNextPhase());
 
-                    // ½ºÅ³ »ç¿ë Áß ÀûÀÇ Parent°¡ ¹Ù²î¾î ¿À·ù »ı±â´Â °ÍÀ» ¹æÁö
+                    // ìŠ¤í‚¬ ì‚¬ìš© ì¤‘ ì ì˜ Parentê°€ ë°”ë€Œì–´ ì˜¤ë¥˜ ìƒê¸°ëŠ” ê²ƒì„ ë°©ì§€
                     if (_isActivatingSkill) yield return new WaitForSeconds(2);
 
-                    target.GetComponent<EnemyController>().StopMoving();
+                    target.GetComponent<ShootingGameEnemy>().StopMoving();
                     target.transform.SetParent(_deadEnemyParent.transform);
                     EnqueEnemy(target);
                 }
@@ -969,7 +1023,7 @@ namespace SingletonPattern
         }
 
         #region Helper Method
-        // mainObject°¡ directÀ» ¹Ù¶óº¸µµ·Ï È¸Àü
+        // mainObjectê°€ directì„ ë°”ë¼ë³´ë„ë¡ íšŒì „
         private void LookRotation2D(GameObject mainObject, Vector2 direction)
         {
             Vector3 vectorToTarget = direction - mainObject.GetComponent<RectTransform>().anchoredPosition;
@@ -987,12 +1041,12 @@ namespace SingletonPattern
             mainObject.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
 
-        // ÃÑ¾ËÀÇ ¸ñÀûÁö¸¦ È­¸é ¹Û±îÁö ¿¬Àå
+        // ì´ì•Œì˜ ëª©ì ì§€ë¥¼ í™”ë©´ ë°–ê¹Œì§€ ì—°ì¥
         public Vector2 ExtendBulletDirection(Vector2 bulletPosition, Vector2 targetPosition)
         {
             Vector2 direction = targetPosition - bulletPosition;
 
-            // 0À¸·Î ³ª´©Áö ¾Êµµ·Ï ¿¹¿Ü Ã³¸®
+            // 0ìœ¼ë¡œ ë‚˜ëˆ„ì§€ ì•Šë„ë¡ ì˜ˆì™¸ ì²˜ë¦¬
             if (direction.x == 0)
             {
                 direction.x = bulletPosition.x;
@@ -1010,15 +1064,15 @@ namespace SingletonPattern
 
             float xToEnd, yToEnd, xToEndRate, yToEndRate;
 
-            // x, yÃà ±âÁØ È­¸é ¹ÛÀ¸·Î ÀÌµ¿ÇÏ±â À§ÇØ ÇÊ¿äÇÑ °Å¸®
+            // x, yì¶• ê¸°ì¤€ í™”ë©´ ë°–ìœ¼ë¡œ ì´ë™í•˜ê¸° ìœ„í•´ í•„ìš”í•œ ê±°ë¦¬
             xToEnd = (direction.x < 0) ? XLeftEnd - bulletPosition.x : XRIghtEnd - bulletPosition.x;
             yToEnd = (direction.y < 0) ? YDownEnd - bulletPosition.y : YUpEnd - bulletPosition.y;
 
-            // È­¸é ¹Û±îÁö ³ª°¡·Á¸é ¾ó¸¶³ª ÀÌµ¿ÇØ¾ß ÇÏ´ÂÁö ºñÀ²
+            // í™”ë©´ ë°–ê¹Œì§€ ë‚˜ê°€ë ¤ë©´ ì–¼ë§ˆë‚˜ ì´ë™í•´ì•¼ í•˜ëŠ”ì§€ ë¹„ìœ¨
             xToEndRate = xToEnd / direction.x;
             yToEndRate = yToEnd / direction.y;
 
-            // ºñÀ²¿¡ µû¶ó °Å¸® ¿¬Àå
+            // ë¹„ìœ¨ì— ë”°ë¼ ê±°ë¦¬ ì—°ì¥
             if (xToEndRate > yToEndRate)
             {
                 direction.x *= yToEndRate;
@@ -1055,26 +1109,26 @@ namespace SingletonPattern
             bullet.GetComponent<RectTransform>().anchoredPosition = new Vector2(enemy.GetComponent<RectTransform>().anchoredPosition.x,
                 enemy.GetComponent<RectTransform>().anchoredPosition.y - 50);
 
-            // ÀûµéÀÇ Åë»ó °ø°İ
+            // ì ë“¤ì˜ í†µìƒ ê³µê²©
             if (bulletName == "Normal")
             {
                 direction = ExtendBulletDirection(bullet.GetComponent<RectTransform>().anchoredPosition, direction);
             }
-            // À¯Áî À¯Åº °ø°İ
+            // ìœ ì¦ˆ ìœ íƒ„ ê³µê²©
             else if (bulletName == "YuzuGrenade")
             {
                 bullet.GetComponent<RectTransform>().localScale = new Vector3(6f, 6f, 6f);
                 _yuzuGrenade = bullet;
 
-                // À¯ÅºÀÌ ÇìÀÏ·Î À§Ä¡±îÁö ³¯¾Æ°¡´Â ½Ã°£À» ÀúÀå
+                // ìœ íƒ„ì´ í—¤ì¼ë¡œ ìœ„ì¹˜ê¹Œì§€ ë‚ ì•„ê°€ëŠ” ì‹œê°„ì„ ì €ì¥
                 _yuzuBulletDuration = Vector2.Distance(bullet.GetComponent<RectTransform>().anchoredPosition, _bossYuzuHalo.GetComponent<RectTransform>().anchoredPosition) / 600 * EnemyBulletSpeed;
 
-                // À¯ÅºÀÇ °æ·Î¸¦ ¿¬Àå, UseBossSkill ºÎºĞ¿¡¼­ _yuzuBulletDurationÀÌ °æ°úÇÑ ÀÌÈÄ Ã¼Å©ÇÏ±â À§ÇÔ
+                // ìœ íƒ„ì˜ ê²½ë¡œë¥¼ ì—°ì¥, UseBossSkill ë¶€ë¶„ì—ì„œ _yuzuBulletDurationì´ ê²½ê³¼í•œ ì´í›„ ì²´í¬í•˜ê¸° ìœ„í•¨
                 direction = ExtendBulletDirection(bullet.GetComponent<RectTransform>().anchoredPosition, direction);
             }
             else if (bulletName == "YuzuBullet")
             {
-                // À¯Áî ÇìÀÏ·ÎÀÇ Áß½É¿¡¼­ ÃÑ¾ËÀÌ ³ª°¡´Â °ÍÀÌ±â ¶§¹®¿¡ y°ªÀ» Á¦ÀÚ¸®·Î µ¹·ÁÁÜ
+                // ìœ ì¦ˆ í—¤ì¼ë¡œì˜ ì¤‘ì‹¬ì—ì„œ ì´ì•Œì´ ë‚˜ê°€ëŠ” ê²ƒì´ê¸° ë•Œë¬¸ì— yê°’ì„ ì œìë¦¬ë¡œ ëŒë ¤ì¤Œ
                 bullet.GetComponent<RectTransform>().anchoredPosition = new Vector2(enemy.GetComponent<RectTransform>().anchoredPosition.x,
                 enemy.GetComponent<RectTransform>().anchoredPosition.y);
 
@@ -1099,7 +1153,7 @@ namespace SingletonPattern
 
             bullet.SetActive(true);
             bullet.GetComponent<Image>().color = Color.white;
-            bullet.GetComponent<BulletController>().SetCanAttack(true);
+            bullet.GetComponent<MidoriBullet>().SetIsAvailableAttack(true);
 
             bullet.GetComponent<RectTransform>().anchoredPosition = new Vector2(_midoriPlane.GetComponent<RectTransform>().anchoredPosition.x,
                 _midoriPlane.GetComponent<RectTransform>().anchoredPosition.y + 50);
@@ -1117,7 +1171,7 @@ namespace SingletonPattern
 
             yield return new WaitForSeconds(bulletDuration);
             bullet.GetComponent<Image>().color = Color.clear;
-            bullet.GetComponent<BulletController>().SetCanAttack(false);
+            bullet.GetComponent<MidoriBullet>().SetIsAvailableAttack(false);
 
             yield return new WaitForSeconds(MinimumTime);
 
@@ -1193,7 +1247,7 @@ namespace SingletonPattern
 
                 _bossYuzuHalo.GetComponent<Image>().DOFade(0, 1);
 
-                // ÇÃ·¹ÀÌ¾î°¡ ³¯¾Æ¿À´Â µµÁß¿¡ ÃÑ¾ËÀ» ¸Â¾ÒÀ» °æ¿ì ÀÛµ¿ÇÏÁö ¾Êµµ·Ï ÇÔ
+                // í”Œë ˆì´ì–´ê°€ ë‚ ì•„ì˜¤ëŠ” ë„ì¤‘ì— ì´ì•Œì„ ë§ì•˜ì„ ê²½ìš° ì‘ë™í•˜ì§€ ì•Šë„ë¡ í•¨
                 if (_yuzuGrenade.GetComponent<Image>().color != Color.clear)
                 {
                     _audioManager.PlaySFX("8bitBomb");
@@ -1205,7 +1259,7 @@ namespace SingletonPattern
                         {
                             if ((i >= -1 && i <= 1) && (j >= -1 && j <= 1)) continue;
 
-                            // °¢µµ¸¦ ±ÕÀÏÇÏ°Ô ÇÏ±â À§ÇØ °ªÀ» Å©°Ô ÇÔ
+                            // ê°ë„ë¥¼ ê· ì¼í•˜ê²Œ í•˜ê¸° ìœ„í•´ ê°’ì„ í¬ê²Œ í•¨
                             Vector2 targetPosition = new Vector2(_bossYuzuHalo.GetComponent<RectTransform>().anchoredPosition.x + (-10000 * i),
                                 _bossYuzuHalo.GetComponent<RectTransform>().anchoredPosition.y + (-10000 * j));
 
@@ -1221,8 +1275,8 @@ namespace SingletonPattern
                 _bossArisHalo.transform.SetParent(_midoriPlane.transform);
                 _bossArisHalo.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-                _bossArisLazer.SetActive(true);
-                StartCoroutine(_bossArisLazer.GetComponent<LazerController>().ChasePlane());
+                _bossArisLaser.SetActive(true);
+                StartCoroutine(_bossArisLaser.GetComponent<LaserController>().ChasePlane());
 
                 _bossArisHalo.GetComponent<Image>().DOFade(1, 1);
 
@@ -1230,16 +1284,16 @@ namespace SingletonPattern
 
                 _bossArisHalo.transform.SetParent(_haloParent.transform);
                 _bossArisHalo.GetComponent<Image>().DOFade(0, 1);
-                _bossArisLazer.GetComponent<LazerController>().SetCanMoveLazer(false);
+                _bossArisLaser.GetComponent<LaserController>().SetIsAvailableMoveLaser(false);
 
                 yield return new WaitForSeconds(0.5f);
 
                 _audioManager.PlaySFX("ArisSkill");
-                StartCoroutine(_bossArisLazer.GetComponent<LazerController>().ShootLazer());
+                StartCoroutine(_bossArisLaser.GetComponent<LaserController>().ShootLaser());
 
                 yield return new WaitForSeconds(1f);
 
-                _bossArisLazer.SetActive(false);
+                _bossArisLaser.SetActive(false);
             }
         }
 
@@ -1256,7 +1310,7 @@ namespace SingletonPattern
             int[] minIndexArray = new int[5];
             GameObject[] midoriHaloArray = new GameObject[5];
 
-            // »ì¾ÆÀÖ´Â Àû °³Ã¼µéÀÇ °Å¸®¸¦ List¿¡ ÀúÀå
+            // ì‚´ì•„ìˆëŠ” ì  ê°œì²´ë“¤ì˜ ê±°ë¦¬ë¥¼ Listì— ì €ì¥
             for (int i = 0; i < aliveEnemyCount; ++i)
             {
                 GameObject enemy = _aliveEnemyParent.transform.GetChild(i).gameObject;
@@ -1268,16 +1322,16 @@ namespace SingletonPattern
 
 
             _audioManager.PlaySFX("UseSkill");
-            // °¡Àå °Å¸®°¡ °¡±î¿î Àû 5¸íÀÇ index¸¦ ÀúÀå
+            // ê°€ì¥ ê±°ë¦¬ê°€ ê°€ê¹Œìš´ ì  5ëª…ì˜ indexë¥¼ ì €ì¥
             for (int i = 0; i < 5; ++i)
             {
                 minIndexArray[i] = distanceList.IndexOf(distanceList.Min());
-                distanceList[minIndexArray[i]] = distanceList.Max() + 1; // Á¦ÀÏ °¡±î¿î Àû¿¡°Ô ÃÖ´ñ°ª + 1 À» µ¡¾º¿ö¼­ 2, 3¹øÂ°·Î °¡±î¿î ÀûÀ» Â÷·Ê·Î Ã£µµ·Ï ÇÔ
+                distanceList[minIndexArray[i]] = distanceList.Max() + 1; // ì œì¼ ê°€ê¹Œìš´ ì ì—ê²Œ ìµœëŒ“ê°’ + 1 ì„ ë§ì”Œì›Œì„œ 2, 3ë²ˆì§¸ë¡œ ê°€ê¹Œìš´ ì ì„ ì°¨ë¡€ë¡œ ì°¾ë„ë¡ í•¨
             }
 
             haloRepeat = (distanceList.Count > 5) ? 5 : distanceList.Count;
 
-            // °¡Àå °Å¸®°¡ °¡±î¿î Àû ÃÖ´ë 5¸í¿¡°Ô ÇìÀÏ·Î¸¦ ¾º¿ò
+            // ê°€ì¥ ê±°ë¦¬ê°€ ê°€ê¹Œìš´ ì  ìµœëŒ€ 5ëª…ì—ê²Œ í—¤ì¼ë¡œë¥¼ ì”Œì›€
             for (int i = 0; i < haloRepeat; ++i)
             {
                 midoriHaloArray[i] = GetPrefab("MidoriHalo");
@@ -1289,18 +1343,18 @@ namespace SingletonPattern
 
             yield return new WaitForSeconds(1);
 
-            // °¡Àå °Å¸®°¡ °¡±î¿î Àû 5¸í¿¡°Ô ÃÑ¾ËÀ» ¹ß»çÇÏ¸ç ¾º¿öÁø ÇìÀÏ·Î ¾ø¾Ö±â
+            // ê°€ì¥ ê±°ë¦¬ê°€ ê°€ê¹Œìš´ ì  5ëª…ì—ê²Œ ì´ì•Œì„ ë°œì‚¬í•˜ë©° ì”Œì›Œì§„ í—¤ì¼ë¡œ ì—†ì• ê¸°
             for (int i = 0; i < 5; ++i)
             {
-                // ¾º¿î ÇìÀÏ·Î°¡ ÀÖÀ» ¶§¸¸ µ¿ÀÛ
+                // ì”Œìš´ í—¤ì¼ë¡œê°€ ìˆì„ ë•Œë§Œ ë™ì‘
                 if (midoriHaloArray[i] != null)
                 {
                     midoriHaloArray[i].GetComponent<Image>().DOFade(0, 1);
                     midoriHaloArray[i].transform.SetParent(_aliveEnemyParent.transform.GetChild(minIndexArray[i]));
                 }
 
-                // »ì¾ÆÀÖÀ» ¶§¸¸ °ø°İ
-                if (!_isAlivePlane) continue;
+                // ì‚´ì•„ìˆì„ ë•Œë§Œ ê³µê²©
+                if (!IsAlivePlane) continue;
 
                 StartCoroutine(ShootMidoriBullet(_aliveEnemyParent.transform.GetChild(minIndexArray[i]).GetComponent<RectTransform>().anchoredPosition));
 
@@ -1309,7 +1363,7 @@ namespace SingletonPattern
 
             yield return new WaitForSeconds(1);
 
-            // ÇìÀÏ·Î ¹İÈ¯
+            // í—¤ì¼ë¡œ ë°˜í™˜
             for (int i = 0; i < haloRepeat; ++i)
             {
                 midoriHaloArray[i].transform.SetParent(_haloParent.transform);
@@ -1320,19 +1374,9 @@ namespace SingletonPattern
         }
         #endregion Player&Enemy Attack
 
-        public bool GetIsAlivePlane()
+        public void SetIsShootingLaser(bool isShootingLaser)
         {
-            return _isAlivePlane;
-        }
-
-        public bool GetIsShootingLazer()
-        {
-            return _isShootingLazer;
-        }
-
-        public void SetIsShootingLazer(bool isShootingLazer)
-        {
-            _isShootingLazer = isShootingLazer;
+            IsShootingLaser = isShootingLaser;
         }
     }
 }

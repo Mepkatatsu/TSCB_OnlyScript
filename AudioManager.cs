@@ -1,6 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class Sound
@@ -13,93 +13,97 @@ namespace SingletonPattern
 {
     public class AudioManager : Singleton<AudioManager>
     {
-        [SerializeField] Sound[] _sfx = null;
-        [SerializeField] Sound[] _bgm = null;
+        public float fadeOutSecond = 1;
+        
+        [SerializeField] private Sound[] sfx;
+        [SerializeField] private Sound[] bgm;
 
-        [SerializeField] AudioSource _bgmPlayer = null;
-        [SerializeField] AudioSource[] _sfxPlayer = null;
+        [SerializeField] private AudioSource bgmPlayer;
+        [SerializeField] private AudioSource[] sfxPlayer;
+        
+        private Coroutine _fadeOutMusicCoroutine;
+        private WaitForSeconds _fadeOutWaitForSeconds;
 
-        private bool _isBGMChanged = false;
-
-        public IEnumerator FadeOutMusic()
+        public override void Awake()
         {
-            _isBGMChanged = false;
-
-            float volume = GetBGMVolume();
-
-            while (volume > 0)
-            {
-                if (_isBGMChanged)
-                {
-                    SetBGMVolume(PlayerPrefs.GetFloat("BGM"));
-                    yield break;
-                }
-                SetBGMVolume(volume - 0.01f);
-                volume = GetBGMVolume();
-                yield return new WaitForSeconds(0.01f);
-            }
-            StopBGM();
-            SetBGMVolume(PlayerPrefs.GetFloat("BGM"));
+            _fadeOutWaitForSeconds = new WaitForSeconds(fadeOutSecond / 100);
+            base.Awake();
         }
 
-        public void PlayBGM(string p_bgmName)
+        public void FadeOutMusic()
         {
-            _isBGMChanged = true;
+            _fadeOutMusicCoroutine = StartCoroutine(FadeOutMusicCoroutine());
+        }
 
-            for (int i = 0; i < _bgm.Length; i++)
+        private IEnumerator FadeOutMusicCoroutine()
+        {
+            var volumeTick = bgmPlayer.volume / 100;
+
+            while (bgmPlayer.volume > 0)
             {
-                if (p_bgmName == _bgm[i].name)
-                {
-                    _bgmPlayer.clip = _bgm[i].clip;
-                    _bgmPlayer.Play();
-                }
+                bgmPlayer.volume -= volumeTick;
+                yield return _fadeOutWaitForSeconds;
+            }
+            StopBGM();
+            bgmPlayer.volume = PlayerPrefs.GetFloat("BGM");
+        }
+
+        public void PlayBGM(string bgmName)
+        {
+            if (_fadeOutMusicCoroutine != null)
+            {
+                StopCoroutine(_fadeOutMusicCoroutine);
+                SetBGMVolume(PlayerPrefs.GetFloat("BGM"));
+            }
+
+            for (int i = 0; i < bgm.Length; i++)
+            {
+                if (!bgmName.Equals(bgm[i].name)) 
+                    continue;
+                
+                bgmPlayer.clip = bgm[i].clip;
+                bgmPlayer.Play();
             }
         }
 
         public void StopBGM()
         {
-            _bgmPlayer.Stop();
+            bgmPlayer.Stop();
         }
 
-        public void PlaySFX(string p_sfxName)
+        public void PlaySFX(string sfxName)
         {
-            for (int i = 0; i < _sfx.Length; i++)
+            for (int i = 0; i < sfx.Length; i++)
             {
-                if (p_sfxName == _sfx[i].name)
+                if (!sfxName.Equals(sfx[i].name))
+                    continue;
+                
+                for (int j = 0; j < sfxPlayer.Length; j++)
                 {
-                    for (int j = 0; j < _sfxPlayer.Length; j++)
-                    {
-                        // SFXPlayer¿¡¼­ Àç»ý ÁßÀÌÁö ¾ÊÀº Audio Source¸¦ ¹ß°ßÇß´Ù¸é 
-                        if (!_sfxPlayer[j].isPlaying)
-                        {
-                            _sfxPlayer[j].clip = _sfx[i].clip;
-                            _sfxPlayer[j].Play();
-                            return;
-                        }
-                    }
-                    Debug.Log("¸ðµç ¿Àµð¿À ÇÃ·¹ÀÌ¾î°¡ Àç»ýÁßÀÔ´Ï´Ù.");
+                    if (sfxPlayer[j].isPlaying)
+                        continue;
+                    
+                    sfxPlayer[j].clip = sfx[i].clip;
+                    sfxPlayer[j].Play();
                     return;
                 }
+                
+                Debug.LogWarning("ëª¨ë“  ì˜¤ë””ì˜¤ í”Œë ˆì´ì–´ê°€ ìž¬ìƒì¤‘ìž…ë‹ˆë‹¤.");
+                return;
             }
-            Debug.Log(p_sfxName + " ÀÌ¸§ÀÇ È¿°úÀ½ÀÌ ¾ø½À´Ï´Ù.");
-            return;
-        }
-
-        public float GetBGMVolume()
-        {
-            return _bgmPlayer.volume;
+            Debug.LogError($"{sfxName} ì´ë¦„ì˜ íš¨ê³¼ìŒì´ ì—†ìŠµë‹ˆë‹¤.");
         }
 
         public void SetBGMVolume(float volume)
         {
-            _bgmPlayer.volume = volume;
+            bgmPlayer.volume = volume;
         }
 
         public void SetSFXVolume(float volume)
         {
-            for (int i = 0; i < _sfxPlayer.Length; i++)
+            for (int i = 0; i < sfxPlayer.Length; i++)
             {
-                _sfxPlayer[i].volume = volume;
+                sfxPlayer[i].volume = volume;
             }
         }
     }

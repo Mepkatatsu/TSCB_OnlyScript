@@ -1,11 +1,9 @@
 using SingletonPattern;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class MidoriPlaneController : MonoBehaviour
+public class MidoriPlane : MonoBehaviour
 {
-    ShootingGameManager _shootingGameManager;
+    private ShootingGameManager _shootingGameManager;
 
     private void Awake()
     {
@@ -15,7 +13,7 @@ public class MidoriPlaneController : MonoBehaviour
     private void OnTriggerStay2D(Collider2D other)
     {
         if (other.CompareTag("PinkEnemy") || other.CompareTag("GreenEnemy") || other.CompareTag("YellowEnemy") || other.CompareTag("PurpleEnemy") ||
-            other.CompareTag("BossEnemy") || other.CompareTag("EnemyBullet") || other.CompareTag("EnemyLazer"))
+            other.CompareTag("BossEnemy") || other.CompareTag("EnemyBullet") || other.CompareTag("EnemyLaser"))
         {
             StartCoroutine(_shootingGameManager.HitByEnemy(gameObject, other.gameObject));
         }

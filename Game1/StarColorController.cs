@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
@@ -8,7 +6,8 @@ public class StarColorController : MonoBehaviour
 {
     [SerializeField] public float startDelayTime;
 
-    private const float starSpeed = 1.0f;
+    private const float StarSpeed = 1.0f;
+    private const float SpendTime = 12 * StarSpeed;
 
     private void Start()
     {
@@ -19,16 +18,16 @@ public class StarColorController : MonoBehaviour
 
     private void StarTwinkle()
     {
-        Sequence starTwinkle = DOTween.Sequence();
+        var starTwinkle = DOTween.Sequence();
 
         starTwinkle.Append(gameObject.GetComponent<Image>().DOFade(1, 1)).Append(gameObject.GetComponent<Image>().DOFade(0, 1)).SetLoops(-1, LoopType.Yoyo);
     }
 
     private float StarFallStart()
     {
-        Sequence starFall = DOTween.Sequence();
+        var starFall = DOTween.Sequence();
 
-        float spendTime = (gameObject.GetComponent<RectTransform>().anchoredPosition.y + 600) / 100 * starSpeed;
+        float spendTime = (gameObject.GetComponent<RectTransform>().anchoredPosition.y + 600) / 100 * StarSpeed;
 
         starFall.Append(gameObject.GetComponent<RectTransform>().DOLocalMoveY(-600, spendTime).SetEase(Ease.Linear))
             .Append(gameObject.GetComponent<RectTransform>().DOLocalMoveY(600, 0f));
@@ -38,11 +37,9 @@ public class StarColorController : MonoBehaviour
 
     private void StarFallLoop()
     {
-        Sequence starFall = DOTween.Sequence();
+        var starFall = DOTween.Sequence();
 
-        float spendTime = (600 + 600) / 100 * starSpeed;
-
-        starFall.Append(gameObject.GetComponent<RectTransform>().DOLocalMoveY(-600, spendTime).SetEase(Ease.Linear))
+        starFall.Append(gameObject.GetComponent<RectTransform>().DOLocalMoveY(-600, SpendTime).SetEase(Ease.Linear))
             .Append(gameObject.GetComponent<RectTransform>().DOLocalMoveY(600, 0f)).SetLoops(-1);
     }
 }

@@ -3,38 +3,38 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LazerController : MonoBehaviour
+public class LaserController : MonoBehaviour
 {
-    LineRenderer _lineRenderer;
-    EdgeCollider2D _edgeCollider;
-    ShootingGameManager _shootingGameManager;
+    private LineRenderer _lineRenderer;
+    private EdgeCollider2D _edgeCollider;
+    private ShootingGameManager _shootingGameManager;
 
     private List<Vector2> _linePositionList;
     private Vector2 _startPosition;
     private Vector2 _targetPosition;
 
-    private bool _canMoveLazer = false;
+    private bool _isAvailableMoveLaser;
 
-    public const int XLeftEnd = -390;
-    public const int XRIghtEnd = 390;
-    public const int YDownEnd = -570;
-    public const int YUpEnd = 570;
+    private const int XLeftEnd = -390;
+    private const int XRightEnd = 390;
+    private const int YDownEnd = -570;
+    private const int YUpEnd = 570;
 
     private void Awake()
     {
         if (_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
     }
 
-    public void SetCanMoveLazer(bool canMoveLazer)
+    public void SetIsAvailableMoveLaser(bool canMoveLaser)
     {
-        _canMoveLazer = canMoveLazer;
+        _isAvailableMoveLaser = canMoveLaser;
     }
 
-    private Vector2 ExtendDirection(Vector2 startPosition, Vector2 targetPosition)
+    private static Vector2 ExtendDirection(Vector2 startPosition, Vector2 targetPosition)
     {
         Vector2 direction = targetPosition - startPosition;
 
-        // 0¿∏∑Œ ≥™¥©¡ˆ æ µµ∑œ øπø‹ √≥∏Æ
+        // 0ÏúºÎ°ú ÎÇòÎàÑÏßÄ ÏïäÎèÑÎ°ù ÏòàÏô∏ Ï≤òÎ¶¨
         if (direction.x == 0)
         {
             direction.x = startPosition.x;
@@ -44,23 +44,21 @@ public class LazerController : MonoBehaviour
         }
         else if (direction.y == 0)
         {
-            direction.x = (direction.x < 0) ? XLeftEnd : XRIghtEnd;
+            direction.x = (direction.x < 0) ? XLeftEnd : XRightEnd;
             direction.y = startPosition.y;
 
             return direction;
         }
 
-        float xToEnd, yToEnd, xToEndRate, yToEndRate;
+        // x, yÏ∂ï Í∏∞Ï§Ä ÌôîÎ©¥ Î∞ñÏúºÎ°ú Ïù¥ÎèôÌïòÍ∏∞ ÏúÑÌï¥ ÌïÑÏöîÌïú Í±∞Î¶¨
+        var xToEnd = (direction.x < 0) ? XLeftEnd - startPosition.x : XRightEnd - startPosition.x;
+        var yToEnd = (direction.y < 0) ? YDownEnd - startPosition.y : YUpEnd - startPosition.y;
 
-        // x, y√‡ ±‚¡ÿ »≠∏È π€¿∏∑Œ ¿Ãµø«œ±‚ ¿ß«ÿ « ø‰«— ∞≈∏Æ
-        xToEnd = (direction.x < 0) ? XLeftEnd - startPosition.x : XRIghtEnd - startPosition.x;
-        yToEnd = (direction.y < 0) ? YDownEnd - startPosition.y : YUpEnd - startPosition.y;
+        // ÌôîÎ©¥ Î∞ñÍπåÏßÄ ÎÇòÍ∞ÄÎ†§Î©¥ ÏñºÎßàÎÇò Ïù¥ÎèôÌï¥Ïïº ÌïòÎäîÏßÄ ÎπÑÏú®
+        var xToEndRate = xToEnd / direction.x;
+        var yToEndRate = yToEnd / direction.y;
 
-        // »≠∏È π€±Ó¡ˆ ≥™∞°∑¡∏È æÛ∏∂≥™ ¿Ãµø«ÿæﬂ «œ¥¬¡ˆ ∫Ò¿≤
-        xToEndRate = xToEnd / direction.x;
-        yToEndRate = yToEnd / direction.y;
-
-        // ∫Ò¿≤ø° µ˚∂Û ∞≈∏Æ ø¨¿Â
+        // ÎπÑÏú®Ïóê Îî∞Îùº Í±∞Î¶¨ Ïó∞Ïû•
         if (xToEndRate > yToEndRate)
         {
             direction.x *= yToEndRate;
@@ -70,7 +68,7 @@ public class LazerController : MonoBehaviour
         }
         else
         {
-            direction.x = (direction.x < 0) ? XLeftEnd : XRIghtEnd;
+            direction.x = (direction.x < 0) ? XLeftEnd : XRightEnd;
 
             direction.y *= xToEndRate;
             direction.y += startPosition.y;
@@ -79,17 +77,17 @@ public class LazerController : MonoBehaviour
         return direction;
     }
 
-    public IEnumerator ShootLazer()
+    public IEnumerator ShootLaser()
     {
         
-        Color lazerColor = Color.white;
+        var laserColor = Color.white;
 
-        // ColorUtility.TryParseHtmlString("#D1B2FF", out lazerColor);
+        // ColorUtility.TryParseHtmlString("#D1B2FF", out laserColor);
 
-        _lineRenderer.startColor = lazerColor;
-        _lineRenderer.endColor = lazerColor;
+        _lineRenderer.startColor = laserColor;
+        _lineRenderer.endColor = laserColor;
         
-        _shootingGameManager.SetIsShootingLazer(true);
+        _shootingGameManager.SetIsShootingLaser(true);
 
         while (_lineRenderer.startWidth < 0.3f)
         {
@@ -112,18 +110,16 @@ public class LazerController : MonoBehaviour
         _lineRenderer.startColor = Color.red;
         _lineRenderer.endColor = Color.red;
 
-        _shootingGameManager.SetIsShootingLazer(false);
+        _shootingGameManager.SetIsShootingLaser(false);
     }
 
-    public void SetColliderPosition()
+    private void SetColliderPosition()
     {
-        Vector2 position;
-
         _linePositionList.Clear();
 
         for (int i = 0; i < _lineRenderer.positionCount; i++)
         {
-            position = _lineRenderer.GetPosition(i);
+            Vector2 position = _lineRenderer.GetPosition(i);
             _linePositionList.Add(position);
         }
 
@@ -132,7 +128,7 @@ public class LazerController : MonoBehaviour
 
     public IEnumerator ChasePlane()
     {
-        _canMoveLazer = true;
+        _isAvailableMoveLaser = true;
 
         _lineRenderer.startWidth = 0.01f;
         _lineRenderer.endWidth = 0.01f;
@@ -140,9 +136,9 @@ public class LazerController : MonoBehaviour
         _lineRenderer.startColor = Color.red;
         _lineRenderer.endColor = Color.red;
 
-        while (_canMoveLazer)
+        while (_isAvailableMoveLaser)
         {
-            // ∫∏Ω∫¿« ¥´ø°º≠ ∑π¿Ã¿˙∞° ≥™∞°µµ∑œ ¿ßƒ° º≥¡§
+            // Î≥¥Ïä§Ïùò ÎààÏóêÏÑú Î†àÏù¥Ï†ÄÍ∞Ä ÎÇòÍ∞ÄÎèÑÎ°ù ÏúÑÏπò ÏÑ§Ï†ï
             _startPosition = new Vector2(_shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.x + 28,
             _shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.y - 2);
 
@@ -155,7 +151,7 @@ public class LazerController : MonoBehaviour
             yield return null;
         }
 
-        while (!_canMoveLazer)
+        while (!_isAvailableMoveLaser)
         {
             _startPosition = new Vector2(_shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.x + 28,
             _shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.y - 2);

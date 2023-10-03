@@ -11,17 +11,29 @@ namespace SingletonPattern
     public class StoryManager : Singleton<StoryManager>
     {
         #region Variables
-        GameManager _gameManager;
-        AudioManager _audioManager;
 
-        public GameObject _story;
-        public Image _WindowFadeOut;
-        public Image _episodeStartWindowFadeOut;
+        private GameManager _gameManager;
+        private AudioManager _audioManager;
 
-        [HideInInspector] public GameObject _yuzu;
-        [HideInInspector] public GameObject _aris;
-        [HideInInspector] public GameObject _midori;
-        [HideInInspector] public GameObject _momoi;
+        public GameObject storyWindow;
+        public GameObject storyWidget;
+        public Image windowFadeOut;
+        public Image storyStartWindowFadeOut;
+        public Image storyBackground;
+        public Image storyMovingBackground;
+        public Button storyProgressBtn;
+        public Button autoBtn;
+        public Button menuBtn;
+        public Button hideUIBtn;
+        public Button skipBtn;
+        public GameObject singleSelectionBtn;
+        public GameObject selection1Btn;
+        public GameObject selection2Btn;
+
+        public GameObject yuzu;
+        public GameObject aris;
+        public GameObject midori;
+        public GameObject momoi;
 
         [Serializable]
         public class MomoiImage
@@ -49,61 +61,63 @@ namespace SingletonPattern
             public Sprite[] buttonArray;
         }
         [Serializable]
-        public class EpisodeBackgroundImage
+        public class StoryBackgroundImage
         {
             public Sprite[] backgroundArray;
         }
 
         // 이미지가 9개 있는 캐릭터의 경우, 9번에 더미 이미지를 집어넣어 10~19까지 사용할 수 있도록 설정
-        [SerializeField] MomoiImage _momoiImage;
-        [SerializeField] MidoriImage _midoriImage;
-        [SerializeField] ArisImage _arisImage;
-        [SerializeField] YuzuImage _yuzuImage;
+        [SerializeField] private MomoiImage momoiImage;
+        [SerializeField] private MidoriImage midoriImage;
+        [SerializeField] private ArisImage arisImage;
+        [SerializeField] private YuzuImage yuzuImage;
 
         // ButtonImage 0: 흰색 배경, 1: 노란색 배경
-        [SerializeField] ButtonImage _buttonImage;
+        [SerializeField] private ButtonImage buttonImage;
 
         // 0: Background, 1: GameDevelopment, 2: TSCBackground, 3: RingOfRight, 4: Ruins, 5: GameCenter
-        [SerializeField] EpisodeBackgroundImage _episodeBackgroundImage;
+        [SerializeField] private StoryBackgroundImage storyBackgroundImage;
 
-        [HideInInspector] public GameObject _characterName;
-        [HideInInspector] public GameObject _departmentName;
-        [HideInInspector] public GameObject _dialogText;
-        [HideInInspector] public GameObject _selection1Btn;
-        [HideInInspector] public GameObject _selection1_1Btn;
-        [HideInInspector] public GameObject _selection1_2Btn;
-        [HideInInspector] public TMP_Text _windowText;
-        [HideInInspector] public TMP_Text _gameOverText;
-        [HideInInspector] public TMP_Text _gameOver2Text;
+        public TMP_Text characterName;
+        public TMP_Text departmentName;
+        public TMP_Text dialogText;
+        public TMP_Text windowText;
+        public TMP_Text gameOverText;
+        public TMP_Text gameOver2Text;
 
-        private Image _momoiCharacterImage;
-        private Image _midoriCharacterImage;
-        private Image _yuzuCharacterImage;
-        private Image _arisCharacterImage;
-        private Image _momoiHaloImage;
-        private Image _midoriHaloImage;
-        private Image _yuzuHaloImage;
-        private Image _arisHaloImage;
+        public GameObject dialogEnd;
 
-        private List<string> _characterNameList = new List<string>();    // 캐릭터 이름 목록
-        private List<string> _departmentNameList = new List<string>();   // 소속 이름 목록
-        private List<string> _dialogList = new List<string>();           // 대화 내용 목록
-        private List<float> _textSpeedList = new List<float>();          // 대화 내용 목록
+        public Image momoiCharacterImage;
+        public Image midoriCharacterImage;
+        public Image yuzuCharacterImage;
+        public Image arisCharacterImage;
+        public Image momoiHaloImage;
+        public Image midoriHaloImage;
+        public Image yuzuHaloImage;
+        public Image arisHaloImage;
+        
+        [NonSerialized] public int currentStage;
 
-        private int _storyNum = 0;                   // 스토리가 어디까지 진행됐는지 저장하는 번호
+        private List<string> _characterNameList;    // 캐릭터 이름 목록
+        private List<string> _departmentNameList;   // 소속 이름 목록
+        private List<string> _dialogList;           // 대화 내용 목록
+        private List<float> _textSpeedList;          // 대화 내용 목록
+
+        private int _storyNum;                   // 스토리가 어디까지 진행됐는지 저장하는 번호
 
         private Coroutine _coroutineStoryProgress;   // 대사를 한글자씩 출력하는 코루틴, 화면을 터치하면 중지시키고 한 번에 표시하기 위해 사용
         private Coroutine _autoStoryProgress;        // 자동으로 스토리를 진행시켜주는 코루틴
         private Coroutine _coroutineWindowFadeOut;   // 화면이 검게 Fade Out되는 코루틴, 화면을 다시 Fade In 할 때 충돌이 생기지 않도록 저장하여 중단시킴
 
-        private bool _canProgress = false;           // 현재 스토리를 진행할 수 있는지 여부
-        private bool _isStoryProgressing = false;    // 스토리에서 현재 대사가 나오고 있는지 확인
+        private bool _isAvailableProgress;           // 현재 스토리를 진행할 수 있는지 여부
+        private bool _isProgressingStory;    // 스토리에서 현재 대사가 나오고 있는지 확인
         private bool _isAutoStoryProgress;           // 현재 자동으로 스토리가 진행 중인지 여부를 판단
-        private bool _isDialogOff = false;           // 대화창이 꺼져있는 상태인지 확인
-        private bool _isSelectionOn = false;         // 선택지가 켜졌는지 확인
-        private bool _isPressedButton = false;       // 버튼이 눌렀는지 확인
+        private bool _isDialogOff;           // 대화창이 꺼져있는 상태인지 확인
+        private bool _isSelectionOn;         // 선택지가 켜졌는지 확인
+        private bool _isPressedButton;       // 버튼이 눌렀는지 확인
+        
+        private float _elapsedTime;
 
-        private int _autoStoryNum = 0;
         #endregion Variables
 
         public override void Awake()
@@ -111,82 +125,89 @@ namespace SingletonPattern
             // GameObject 객체 연결
             if (_gameManager == null) _gameManager = GameManager.Instance;
             if (_audioManager == null) _audioManager = AudioManager.Instance;
+
+            StartCoroutine(StartTimer());
+
+            // 왜인진 모르겠지만 선언할 떄 new로 해줘도 null임
+            _characterNameList = new List<string>();
+            _departmentNameList = new List<string>();
+            _dialogList = new List<string>();
+            _textSpeedList = new List<float>();
             
-            _momoi = _story.transform.Find("Episode/Character/MomoiParent/Momoi").gameObject;
-            _midori = _story.transform.Find("Episode/Character/MidoriParent/Midori").gameObject;
-            _yuzu = _story.transform.Find("Episode/Character/YuzuParent/Yuzu").gameObject;
-            _aris = _story.transform.Find("Episode/Character/ArisParent/Aris").gameObject;
-
-            _momoiCharacterImage = _momoi.transform.Find("CharacterImage").GetComponent<Image>();
-            _midoriCharacterImage = _midori.transform.Find("CharacterImage").GetComponent<Image>();
-            _yuzuCharacterImage = _yuzu.transform.Find("CharacterImage").GetComponent<Image>();
-            _arisCharacterImage = _aris.transform.Find("CharacterImage").GetComponent<Image>();
-
-            _momoiHaloImage = _momoi.transform.Find("HaloParent/Halo").GetComponent<Image>();
-            _midoriHaloImage = _midori.transform.Find("HaloParent/Halo").GetComponent<Image>();
-            _yuzuHaloImage = _yuzu.transform.Find("HaloParent/Halo").GetComponent<Image>();
-            _arisHaloImage = _aris.transform.Find("HaloParent/Halo").GetComponent<Image>();
-
-            _characterName = _story.transform.Find("Episode/Dialog/CharacterName").gameObject;
-            _departmentName = _story.transform.Find("Episode/Dialog/DepartmentName").gameObject;
-            _dialogText = _story.transform.Find("Episode/Dialog/DialogText").gameObject;
-
-            _selection1Btn = _story.transform.Find("Episode/UI/Selection1Btn").gameObject;
-            _selection1_1Btn = _story.transform.Find("Episode/UI/Selection1-1Btn").gameObject;
-            _selection1_2Btn = _story.transform.Find("Episode/UI/Selection1-2Btn").gameObject;
-
-            _windowText = _story.transform.Find("Episode/WindowText").GetComponent<TMP_Text>();
-            _gameOverText = _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>();
-            _gameOver2Text = _story.transform.Find("Episode/WindowText_GameOver2").GetComponent<TMP_Text>();
+            if (storyProgressBtn)
+                storyProgressBtn.onClick.AddListener(OnClickStoryProgressBtn);
+            if (autoBtn)
+                autoBtn.onClick.AddListener(OnClickAutoBtn);
+            if (menuBtn)
+                menuBtn.onClick.AddListener(OnClickMenuBtn);
+            if (hideUIBtn)
+                hideUIBtn.onClick.AddListener(OnClickHideUI);
+            if (singleSelectionBtn)
+                singleSelectionBtn.GetComponent<Button>().onClick.AddListener(OnClickSingleSelection);
+            if (selection1Btn)
+                selection1Btn.GetComponent<Button>().onClick.AddListener(OnClickSelection1);
+            if (selection2Btn)
+                selection2Btn.GetComponent<Button>().onClick.AddListener(OnClickSelection2);
+            if (skipBtn)
+                skipBtn.onClick.AddListener(OnClickSkipBtn);
         }
 
         // 스토리에 처음 진입했을 때 작동하는 함수
         public IEnumerator InitializeStory()
         {
-            _story.SetActive(true);
-            _episodeStartWindowFadeOut.color = new Color(1, 1, 1, 0);
-            _story.transform.Find("EpisodeStart").gameObject.SetActive(true);
-            _story.transform.Find("Episode").gameObject.SetActive(false);
-            StartCoroutine(_audioManager.FadeOutMusic());
+            storyWindow.SetActive(true);
+            storyStartWindowFadeOut.color = new Color(1, 1, 1, 0);
+            storyWindow.transform.Find("StoryStart").gameObject.SetActive(true);
+            storyWidget.gameObject.SetActive(false);
+            _audioManager.FadeOutMusic();
             yield return new WaitForSeconds(6.5f);
-            _episodeStartWindowFadeOut.DOFade(1, 2);
+            storyStartWindowFadeOut.DOFade(1, 2);
 
             // 여기부터 스토리 초기 세팅
 
-            _dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
-            SetCharacterImage(_momoi, 0);
-            SetCharacterImage(_midori, 0);
-            SetCharacterImage(_aris, 0);
-            SetCharacterImage(_yuzu, 0);
-            _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = new Color(1, 1, 1, 0);
-            _momoi.SetActive(false);
-            _midori.SetActive(false);
-            _aris.SetActive(false);
-            _yuzu.SetActive(false);
+            dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
+            SetCharacterImage(momoi, 0);
+            SetCharacterImage(midori, 0);
+            SetCharacterImage(aris, 0);
+            SetCharacterImage(yuzu, 0);
+            storyBackground.color = new Color(1, 1, 1, 0);
+            momoi.SetActive(false);
+            midori.SetActive(false);
+            aris.SetActive(false);
+            yuzu.SetActive(false);
 
-            _momoiCharacterImage.color = new Color(1, 1, 1, 0);
-            _momoiHaloImage.color = new Color(1, 1, 1, 0);
-            _midoriCharacterImage.color = new Color(1, 1, 1, 0);
-            _midoriHaloImage.color = new Color(1, 1, 1, 0);
-            _arisCharacterImage.color = new Color(1, 1, 1, 0);
-            _arisHaloImage.GetComponent<Image>().color = new Color(1, 1, 1, 0);
-            _yuzuCharacterImage.color = new Color(1, 1, 1, 0);
-            _yuzuHaloImage.color = new Color(1, 1, 1, 0);
+            momoiCharacterImage.color = new Color(1, 1, 1, 0);
+            momoiHaloImage.color = new Color(1, 1, 1, 0);
+            midoriCharacterImage.color = new Color(1, 1, 1, 0);
+            midoriHaloImage.color = new Color(1, 1, 1, 0);
+            arisCharacterImage.color = new Color(1, 1, 1, 0);
+            arisHaloImage.GetComponent<Image>().color = new Color(1, 1, 1, 0);
+            yuzuCharacterImage.color = new Color(1, 1, 1, 0);
+            yuzuHaloImage.color = new Color(1, 1, 1, 0);
 
-            _momoi.SetActive(false);
-            _midori.SetActive(false);
-            _aris.SetActive(false);
-            _yuzu.SetActive(false);
+            momoi.SetActive(false);
+            midori.SetActive(false);
+            aris.SetActive(false);
+            yuzu.SetActive(false);
 
             // 여기까지 스토리 초기 세팅
 
             yield return new WaitForSeconds(2.5f);
-            _story.transform.Find("Episode").gameObject.SetActive(true);
-            _story.transform.Find("Episode/UI").gameObject.SetActive(true);
-            _story.transform.Find("Episode/Dialog").gameObject.SetActive(true);
-            _story.transform.Find("Episode/EpisodeProgressBtn").gameObject.SetActive(true);
-            _canProgress = true;
+            storyWidget.SetActive(true);
+            storyWidget.transform.Find("UI").gameObject.SetActive(true);
+            storyWidget.transform.Find("Dialog").gameObject.SetActive(true);
+            storyProgressBtn.gameObject.SetActive(true);
+            _isAvailableProgress = true;
             DoStoryProgress();
+        }
+
+        private IEnumerator StartTimer()
+        {
+            while (true)
+            {
+                if (_isAvailableProgress && !_isProgressingStory) _elapsedTime += 0.5f;
+                yield return new WaitForSeconds(0.5f);
+            }
         }
 
         #region Method for UI(Dialog, Button, Selection)
@@ -195,30 +216,15 @@ namespace SingletonPattern
         {
             if (!isDialogOff)
             {
-                _canProgress = false;
+                _isAvailableProgress = false;
                 _isDialogOff = true;
-                _dialogText.transform.parent.gameObject.SetActive(false);
+                dialogText.transform.parent.gameObject.SetActive(false);
             }
             else
             {
-                _canProgress = true;
+                _isAvailableProgress = true;
                 _isDialogOff = false;
-                _dialogText.transform.parent.gameObject.SetActive(true);
-            }
-        }
-
-        // 스토리 진행 중 화면을 클릭했을 때 작동하는 함수
-        public void EpisodeBackgroundClick()
-        {
-            if (_story.transform.Find("Episode/UI/Menu").gameObject.activeSelf) _story.transform.Find("Episode/UI/Menu").gameObject.SetActive(false);
-            if (_story.transform.Find("Episode/UI").gameObject.activeSelf == false)
-            {
-                _story.transform.Find("Episode/UI").gameObject.SetActive(true);
-                if (!_isDialogOff) _story.transform.Find("Episode/Dialog").gameObject.SetActive(true);
-            }
-            else
-            {
-                DoStoryProgress();
+                dialogText.transform.parent.gameObject.SetActive(true);
             }
         }
 
@@ -241,12 +247,12 @@ namespace SingletonPattern
             _storyNum++;
             if (num == 0)
             {
-                _selection1Btn.SetActive(false);
+                singleSelectionBtn.SetActive(false);
             }
             else if (num == 1)
             {
-                _selection1_1Btn.SetActive(false);
-                _selection1_2Btn.SetActive(false);
+                selection1Btn.SetActive(false);
+                selection2Btn.SetActive(false);
 
                 // 선택지를 고르면 알맞은 번호로 이동
                 if (_storyNum == 14) // A키를 입력한다.
@@ -260,8 +266,8 @@ namespace SingletonPattern
             }
             else if (num == 2)
             {
-                _selection1_1Btn.SetActive(false);
-                _selection1_2Btn.SetActive(false);
+                selection1Btn.SetActive(false);
+                selection2Btn.SetActive(false);
 
                 // 선택지를 고르면 알맞은 번호로 이동
                 if (_storyNum == 14) // B키를 입력한다.
@@ -274,7 +280,7 @@ namespace SingletonPattern
                 }
             }
 
-            _canProgress = true;
+            _isAvailableProgress = true;
             DoStoryProgress();
         }
 
@@ -283,9 +289,9 @@ namespace SingletonPattern
         {
             _isPressedButton = false;
             _isSelectionOn = true;
-            _selection1Btn.SetActive(true);
-            _selection1Btn.transform.Find("Text").GetComponent<TMP_Text>().text = selectionDialog;
-            _selection1Btn.GetComponent<Animator>().Play("ButtonPopup");
+            singleSelectionBtn.SetActive(true);
+            singleSelectionBtn.transform.Find("Text").GetComponent<TMP_Text>().text = selectionDialog;
+            singleSelectionBtn.GetComponent<Animator>().Play("ButtonPopup");
         }
 
         // 2개짜리 선택지를 보여주는 함수
@@ -293,12 +299,12 @@ namespace SingletonPattern
         {
             _isPressedButton = false;
             _isSelectionOn = true;
-            _selection1_1Btn.SetActive(true);
-            _selection1_2Btn.SetActive(true);
-            _selection1_1Btn.transform.Find("Text").GetComponent<TMP_Text>().text = selectionDialog1;
-            _selection1_2Btn.transform.Find("Text").GetComponent<TMP_Text>().text = selectionDialog2;
-            _selection1_1Btn.GetComponent<Animator>().Play("ButtonPopup");
-            _selection1_2Btn.GetComponent<Animator>().Play("ButtonPopup");
+            selection1Btn.SetActive(true);
+            selection2Btn.SetActive(true);
+            selection1Btn.transform.Find("Text").GetComponent<TMP_Text>().text = selectionDialog1;
+            selection2Btn.transform.Find("Text").GetComponent<TMP_Text>().text = selectionDialog2;
+            selection1Btn.GetComponent<Animator>().Play("ButtonPopup");
+            selection2Btn.GetComponent<Animator>().Play("ButtonPopup");
         }
 
         public bool CheckAutoProgress()
@@ -307,7 +313,7 @@ namespace SingletonPattern
             {
                 StopCoroutine(_autoStoryProgress);
                 _isAutoStoryProgress = false;
-                _story.transform.Find("Episode/UI/AutoBtn").GetComponent<Image>().sprite = _buttonImage.buttonArray[0];
+                storyWidget.transform.Find("UI/AutoBtn").GetComponent<Image>().sprite = buttonImage.buttonArray[0];
                 return true;
             }
             else return false;
@@ -320,23 +326,28 @@ namespace SingletonPattern
 
             _autoStoryProgress = StartCoroutine(DoAutoProgressCoroutine());
             _isAutoStoryProgress = true;
-            _story.transform.Find("Episode/UI/AutoBtn").GetComponent<Image>().sprite = _buttonImage.buttonArray[1];
+            storyWidget.transform.Find("UI/AutoBtn").GetComponent<Image>().sprite = buttonImage.buttonArray[1];
         }
 
         // 자동으로 스토리가 진행되도록 해주는 코루틴
-        public IEnumerator DoAutoProgressCoroutine()
+        private IEnumerator DoAutoProgressCoroutine()
         {
             while (true)
             {
                 // 컷씬이 진행중일 때는 대기
-                while (!_canProgress)
+                while (!_isAvailableProgress)
                 {
                     yield return new WaitForSeconds(1);
                 }
 
                 // 대화가 출력되고 있지 않을 때만 진행
-                if (!_isStoryProgressing)
+                if (!_isProgressingStory)
                 {
+                    if (_elapsedTime >= 1f)
+                    {
+                        DoStoryProgress();
+                    }
+                    /*
                     // 대화 출력이 완료된 후 최소 1초 대기
                     _autoStoryNum = _storyNum;
                     yield return new WaitForSeconds(1);
@@ -347,11 +358,9 @@ namespace SingletonPattern
                     {
                         DoStoryProgress();
                     }
+                    */
                 }
-                else
-                {
-                    yield return new WaitForSeconds(1); // 1초마다 확인
-                }
+                yield return new WaitForSeconds(0.5f);
             }
         }
         #endregion Method for UI(Dialog, Button, Selection)
@@ -359,9 +368,9 @@ namespace SingletonPattern
         // 스토리 진행시 텍스트 외에 캐릭터 움직임, 효과음 등을 관리하는 파트
         private IEnumerator DoStoryAction(int num)
         {
-            if (!_isStoryProgressing)
+            if (!_isProgressingStory)
             {
-                _canProgress = false;
+                _isAvailableProgress = false;
                 if (num == 0)
                 {
                     _audioManager.PlaySFX("Silence");
@@ -372,83 +381,83 @@ namespace SingletonPattern
                 }
                 else if (num == 2)
                 {
-                    _dialogText.GetComponent<TMP_Text>().fontSize = 60;
+                    dialogText.GetComponent<TMP_Text>().fontSize = 60;
                     _audioManager.PlaySFX("Start");
                 }
                 else if (num == 3)
                 {
-                    _momoi.SetActive(true);
-                    _momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+                    momoi.SetActive(true);
+                    momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
 
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[1];
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().DOFade(1, 2);
-                    _momoiCharacterImage.DOFade(1, 2);
-                    _momoiHaloImage.DOFade(1, 2);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[1];
+                    storyBackground.DOFade(1, 2);
+                    momoiCharacterImage.DOFade(1, 2);
+                    momoiHaloImage.DOFade(1, 2);
 
                     _audioManager.PlayBGM("PixelTime");
                     yield return new WaitForSeconds(1.5f);
-                    _dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
-                    PlayCharacterEffectAnimation(_momoi, "Talking");
-                    _momoi.GetComponent<Animator>().Play("Jumping");
+                    dialogText.GetComponent<TMP_Text>().fontSize = 42.5f;
+                    PlayCharacterEffectAnimation(momoi, "Talking");
+                    momoi.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 4)
                 {
-                    _midori.SetActive(true);
-                    _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0); // midori right side : 625
-                    _midoriCharacterImage.color = Color.white;
-                    _midoriHaloImage.color = Color.white;
+                    midori.SetActive(true);
+                    midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0); // midori right side : 625
+                    midoriCharacterImage.color = Color.white;
+                    midoriHaloImage.color = Color.white;
 
-                    _momoi.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-700, 0.5f); // momoi left side : -700
+                    momoi.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-700, 0.5f); // momoi left side : -700
                 }
                 else if (num == 5)
                 {
-                    _midori.gameObject.SetActive(false);
-                    _momoi.gameObject.SetActive(false);
-                    _aris.gameObject.SetActive(true);
-                    _yuzu.gameObject.SetActive(true);
+                    midori.gameObject.SetActive(false);
+                    momoi.gameObject.SetActive(false);
+                    aris.gameObject.SetActive(true);
+                    yuzu.gameObject.SetActive(true);
 
-                    SetCharacterImage(_yuzu, 8);
-                    SetCharacterImage(_aris, 0);
-                    _arisCharacterImage.color = Color.white;
-                    _arisHaloImage.color = Color.white;
-                    _aris.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0); // aris right side : 580
-                    _yuzuCharacterImage.color = Color.white;
-                    _yuzuHaloImage.color = Color.white;
-                    _yuzu.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0); // left side : -700
-                    _yuzu.GetComponent<Animator>().Play("Shiver");
-                    PlayCharacterEffectAnimation(_yuzu, "Mess");
+                    SetCharacterImage(yuzu, 8);
+                    SetCharacterImage(aris, 0);
+                    arisCharacterImage.color = Color.white;
+                    arisHaloImage.color = Color.white;
+                    aris.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0); // aris right side : 580
+                    yuzuCharacterImage.color = Color.white;
+                    yuzuHaloImage.color = Color.white;
+                    yuzu.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0); // left side : -700
+                    yuzu.GetComponent<Animator>().Play("Shiver");
+                    PlayCharacterEffectAnimation(yuzu, "Mess");
                 }
                 else if (num == 6)
                 {
-                    SetCharacterImage(_aris, 7);
-                    PlayCharacterEffectAnimation(_aris, "Shine");
+                    SetCharacterImage(aris, 7);
+                    PlayCharacterEffectAnimation(aris, "Shine");
                 }
                 else if (num == 7)
                 {
-                    SetCharacterImage(_momoi, 3);
-                    _momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-                    _momoi.gameObject.SetActive(true);
-                    _aris.gameObject.SetActive(false);
-                    _yuzu.gameObject.SetActive(false);
+                    SetCharacterImage(momoi, 3);
+                    momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+                    momoi.gameObject.SetActive(true);
+                    aris.gameObject.SetActive(false);
+                    yuzu.gameObject.SetActive(false);
 
-                    _momoi.GetComponent<Animator>().Play("Jumping");
-                    PlayCharacterEffectAnimation(_momoi, "Talking");
+                    momoi.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(momoi, "Talking");
                 }
                 else if (num == 8) // 선택지
                 {
-                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("( 자리에 앉는다. )");
-                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("（席に座る）");
+                    if (LocalizeManager.language == LocalizeManager.Language.Korean) ShowSelection("( 자리에 앉는다. )");
+                    else if (LocalizeManager.language == LocalizeManager.Language.Japanese) ShowSelection("（席に座る）");
                 }
                 else if (num == 9) // Window Fade Out
                 {
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
                     _audioManager.PlaySFX("TSCStart");
 
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    _audioManager.FadeOutMusic();
                     yield return new WaitForSeconds(2f);
                     SetDialogOn(false);
-                    _momoi.transform.gameObject.SetActive(false);
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[2];
+                    momoi.transform.gameObject.SetActive(false);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[2];
 
                     yield return new WaitForSeconds(2f);
 
@@ -460,14 +469,14 @@ namespace SingletonPattern
                     yield return new WaitForSeconds(0.5f);
                     _audioManager.PlayBGM("Theme101");
 
-                    if (PlayerPrefs.GetString("Language").Equals("Korean")) 
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 코스모스 세기 2354년, 인류는 업화의 불길에 휩싸였다. >\n\n", 1));
-                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) 
-                        StartCoroutine(AppendTextOneByOne(_windowText, "コスモス世紀2354年、人類は劫火の炎につつまれた……\n\n", 1));
+                    if (LocalizeManager.language == LocalizeManager.Language.Korean) 
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 코스모스 세기 2354년, 인류는 업화의 불길에 휩싸였다. >\r\n\r\n", 1));
+                    else if (LocalizeManager.language == LocalizeManager.Language.Japanese) 
+                        StartCoroutine(AppendTextOneByOne(windowText, "コスモス世紀2354年、人類は劫火の炎につつまれた……\r\n\r\n", 1));
 
                     yield return new WaitForSeconds(2.5f);
-                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("“……동화적 색채?”");
-                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("“……童話テイストで、色彩豊か？”");
+                    if (LocalizeManager.language == LocalizeManager.Language.Korean) ShowSelection("“……동화적 색채?”");
+                    else if (LocalizeManager.language == LocalizeManager.Language.Japanese) ShowSelection("“……童話テイストで、色彩豊か？”");
                 }
                 else if (num == 11)
                 {
@@ -475,23 +484,23 @@ namespace SingletonPattern
                 }
                 else if (num == 12)
                 {
-                    if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("“……。”", "( 버튼을 입력한다. )");
-                    else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("“…….”", "（ボタンを押す）");
+                    if (LocalizeManager.language == LocalizeManager.Language.Korean) ShowSelection("“……。”", "( 버튼을 입력한다. )");
+                    else if (LocalizeManager.language == LocalizeManager.Language.Japanese) ShowSelection("“…….”", "（ボタンを押す）");
                 }
                 else if (num == 13)
                 {
                     SetDialogOn(false);
-                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 튜토리얼을 시작합니다. >\n\n", 1));
-                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "チュートリアルを開始します。\n\n", 1));
+                    if (LocalizeManager.language == LocalizeManager.Language.Korean)
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 튜토리얼을 시작합니다. >\r\n\r\n", 1));
+                    else if (LocalizeManager.language ==LocalizeManager.Language.Japanese)
+                        StartCoroutine(AppendTextOneByOne(windowText, "チュートリアルを開始します。\r\n\r\n", 1));
                     
                     yield return new WaitForSeconds(2);
 
-                    if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 먼저 B 키를 눌러, 눈앞의 무기를 장착해보세요. >\n\n", 1));
-                    else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "まずはBボタンを押して、目の前の武器を装着してみてください。\n\n", 1));
+                    if (LocalizeManager.language == LocalizeManager.Language.Korean)
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 먼저 B 키를 눌러, 눈앞의 무기를 장착해보세요. >\n\n", 1));
+                    else if (LocalizeManager.language == LocalizeManager.Language.Japanese)
+                        StartCoroutine(AppendTextOneByOne(windowText, "まずはBボタンを押して、目の前の武器を装着してみてください。\n\n", 1));
 
                     yield return new WaitForSeconds(2.5f);
 
@@ -516,9 +525,9 @@ namespace SingletonPattern
                 {
                     SetDialogOn(false);
                     // 게임 오버
-                    _windowText.text = "";
+                    windowText.text = "";
                     _audioManager.PlaySFX("GameOver");
-                    _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().DOFade(1, 2f);
+                    gameOverText.DOFade(1, 2f);
                     yield return new WaitForSeconds(4);
                     if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("“?!”");
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese")) ShowSelection("“？！”");
@@ -530,23 +539,23 @@ namespace SingletonPattern
                 }
                 else if (num == 18) // WindowFadeOut
                 {
-                    SetCharacterImage(_momoi, 3);
+                    SetCharacterImage(momoi, 3);
 
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
                     yield return new WaitForSeconds(2f);
-                    _momoi.transform.gameObject.SetActive(true);
-                    _windowText.text = "";
+                    momoi.transform.gameObject.SetActive(true);
+                    windowText.text = "";
 
                     //GameOver 글씨 투명하게 변경
                     ColorUtility.TryParseHtmlString("#FF656B00", out Color color);
-                    _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().color = color;
+                    gameOverText.color = color;
 
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[1];
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[1];
                     yield return new WaitForSeconds(2f);
 
 
-                    _momoi.GetComponent<Animator>().Play("Jumping");
-                    PlayCharacterEffectAnimation(_momoi, "Laughing");
+                    momoi.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(momoi, "Laughing");
                     _audioManager.PlayBGM("MischievousStep");
                 }
                 else if (num == 19)
@@ -556,11 +565,11 @@ namespace SingletonPattern
                 }
                 else if (num == 20)
                 {
-                    _aris.SetActive(true);
-                    SetCharacterImage(_aris, 9);
+                    aris.SetActive(true);
+                    SetCharacterImage(aris, 9);
 
-                    _momoi.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-700, 0.5f); // momoi left side : -700
-                    PlayCharacterEffectAnimation(_aris, "Sweat");
+                    momoi.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-700, 0.5f); // momoi left side : -700
+                    PlayCharacterEffectAnimation(aris, "Sweat");
                 }
                 else if (num == 21)
                 {
@@ -569,19 +578,19 @@ namespace SingletonPattern
                 }
                 else if (num == 22)
                 {
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
+                    _audioManager.FadeOutMusic();
                     _audioManager.PlaySFX("TSCStart");
                     yield return new WaitForSeconds(2f);
                     SetDialogOn(false);
-                    _momoi.transform.gameObject.SetActive(false);
-                    _aris.transform.gameObject.SetActive(false);
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[2];
+                    momoi.transform.gameObject.SetActive(false);
+                    aris.transform.gameObject.SetActive(false);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[2];
                     yield return new WaitForSeconds(2f);
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 무기 장착에 성공했습니다. >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 무기 장착에 성공했습니다. >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "武器を装着しました。\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "武器を装着しました。\n\n", 1));
                     _audioManager.PlaySFX("Message");
                     yield return new WaitForSeconds(2f);
                     SetDialogOn(true);
@@ -591,12 +600,12 @@ namespace SingletonPattern
                 // A버튼 루트
                 else if (num == 23)
                 {
-                    _windowText.text = "";
+                    windowText.text = "";
                     _audioManager.StopBGM();
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 무기 장착에 성공했습니다. >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 무기 장착에 성공했습니다. >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "武器を装着しました。\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "武器を装着しました。\n\n", 1));
                     _audioManager.PlaySFX("Message");
                     yield return new WaitForSeconds(2f);
                     SetDialogOn(true);
@@ -623,19 +632,19 @@ namespace SingletonPattern
                 {
                     SetDialogOn(false);
                     _audioManager.PlayBGM("MechanicalJungle");
-                    _windowText.text += "<#FF656B>";
+                    windowText.text += "<#FF656B>";
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 전투 발생! 전투 발생! >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 전투 발생! 전투 발생! >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "エンカウントが発生しました！\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "エンカウントが発生しました！\n\n", 1));
 
                     yield return new WaitForSeconds(2);
 
-                    _windowText.text += "</color>";
+                    windowText.text += "</color>";
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 야생의 푸니젤리가 나타났다! >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 야생의 푸니젤리가 나타났다! >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "野生のプニプニが現れた！\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "野生のプニプニが現れた！\n\n", 1));
                     yield return new WaitForSeconds(2);
                     SetDialogOn(true);
                 }
@@ -650,25 +659,25 @@ namespace SingletonPattern
                     SetDialogOn(false);
                     _audioManager.StopBGM();
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 탕!! >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 탕!! >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "ッダーン！\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "ッダーン！\n\n", 1));
                     _audioManager.PlaySFX("8bitBang");
 
                     yield return new WaitForSeconds(2);
 
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 명중, 당신의 캐릭터가 즉사했다. >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 명중, 당신의 캐릭터가 즉사했다. >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "攻撃が命中、即死しました\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "攻撃が命中、即死しました\n\n", 1));
                     _audioManager.PlaySFX("KnockDown");
 
                     yield return new WaitForSeconds(2);
 
                     // 게임 오버
-                    _windowText.text = "";
+                    windowText.text = "";
                     _audioManager.PlaySFX("GameOver");
-                    _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().DOFade(1, 2);
+                    gameOverText.DOFade(1, 2);
                     yield return new WaitForSeconds(4);
 
                     if (PlayerPrefs.GetString("Language").Equals("Korean")) ShowSelection("“??!!”");
@@ -676,48 +685,48 @@ namespace SingletonPattern
                 }
                 else if (num == 31)
                 {
-                    _story.transform.Find("Episode/WindowText_GameOver2").GetComponent<TMP_Text>().DOFade(1, 2);
+                    gameOver2Text.DOFade(1, 2);
                     _audioManager.PlayBGM("FadeOut");
                     _audioManager.PlaySFX("RobotTalk");
                     yield return new WaitForSeconds(4);
 
-                    SetCharacterImage(_momoi, 7);
+                    SetCharacterImage(momoi, 7);
 
-                    _momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0);
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
+                    momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0);
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
                     yield return new WaitForSeconds(2);
-                    _momoi.transform.gameObject.SetActive(true);
-                    _windowText.text = "";
+                    momoi.transform.gameObject.SetActive(true);
+                    windowText.text = "";
 
                     //GameOver 글씨 투명하게 변경
-                    ColorUtility.TryParseHtmlString("#FF656B00", out Color color);
-                    _story.transform.Find("Episode/WindowText_GameOver").GetComponent<TMP_Text>().color = color;
+                    ColorUtility.TryParseHtmlString("#FF656B00", out var color);
+                    gameOverText.color = color;
                     ColorUtility.TryParseHtmlString("#5DC48100", out color);
-                    _story.transform.Find("Episode/WindowText_GameOver2").GetComponent<TMP_Text>().color = color;
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[1];
+                    gameOver2Text.color = color;
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[1];
                     yield return new WaitForSeconds(2);
 
-                    PlayCharacterEffectAnimation(_momoi, "Silence");
+                    PlayCharacterEffectAnimation(momoi, "Silence");
                     SetDialogOn(true);
                 }
                 else if (num == 32)
                 {
-                    _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0);
-                    _midori.transform.gameObject.SetActive(true);
-                    SetCharacterImage(_midori, 7);
+                    midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0);
+                    midori.transform.gameObject.SetActive(true);
+                    SetCharacterImage(midori, 7);
 
-                    PlayCharacterEffectAnimation(_midori, "Sweat");
+                    PlayCharacterEffectAnimation(midori, "Sweat");
                 }
                 else if (num == 33)
                 {
-                    _momoi.SetActive(false);
-                    _midori.SetActive(false);
-                    _aris.SetActive(true);
-                    SetCharacterImage(_aris, 10);
+                    momoi.SetActive(false);
+                    midori.SetActive(false);
+                    aris.SetActive(true);
+                    SetCharacterImage(aris, 10);
 
-                    _aris.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-                    _aris.GetComponent<Animator>().Play("Jumping");
-                    PlayCharacterEffectAnimation(_aris, "Mess");
+                    aris.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+                    aris.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(aris, "Mess");
                 }
                 else if (num == 34)
                 {
@@ -726,39 +735,39 @@ namespace SingletonPattern
                 }
                 else if (num == 35) // Window Fade Out(게임 부분으로)
                 {
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
+                    _audioManager.FadeOutMusic();
                     _audioManager.PlaySFX("TSCStart");
                     yield return new WaitForSeconds(2);
                     SetDialogOn(false);
-                    _momoi.transform.gameObject.SetActive(false);
-                    _aris.transform.gameObject.SetActive(false);
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[2];
+                    momoi.transform.gameObject.SetActive(false);
+                    aris.transform.gameObject.SetActive(false);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[2];
 
                     yield return new WaitForSeconds(2);
 
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 무기 장착에 성공했습니다. >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 무기 장착에 성공했습니다. >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "武器を装着しました。\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "武器を装着しました。\n\n", 1));
                     _audioManager.PlaySFX("Message");
 
                     yield return new WaitForSeconds(2f);
 
                     _audioManager.PlayBGM("MechanicalJungle");
-                    _windowText.text += "<#FF656B>";
+                    windowText.text += "<#FF656B>";
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 전투 발생! 전투 발생! >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 전투 발생! 전투 발생! >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "エンカウントが発生しました！\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "エンカウントが発生しました！\n\n", 1));
 
                     yield return new WaitForSeconds(2);
 
-                    _windowText.text += "</color>";
+                    windowText.text += "</color>";
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 야생의 푸니젤리가 나타났다! >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 야생의 푸니젤리가 나타났다! >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "野生のプニプニが現れた！\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "野生のプニプニが現れた！\n\n", 1));
 
                     yield return new WaitForSeconds(2);
 
@@ -772,18 +781,18 @@ namespace SingletonPattern
                     yield return new WaitForSeconds(2);
 
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 오류 발생! 오류 발생! >\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 오류 발생! 오류 발생! >\n\n", 1));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "エラー！エラー！\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "エラー！エラー！\n\n", 1));
 
                     _audioManager.StopBGM();
                     _audioManager.PlaySFX("RobotTalk");
                     yield return new WaitForSeconds(2);
 
                     if (PlayerPrefs.GetString("Language").Equals("Korean"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "< 심각한 오류 발생으로 시스템을 긴급 정지합니다. >\n\n", 1.5f));
+                        StartCoroutine(AppendTextOneByOne(windowText, "< 심각한 오류 발생으로 시스템을 긴급 정지합니다. >\n\n", 1.5f));
                     else if (PlayerPrefs.GetString("Language").Equals("Japanese"))
-                        StartCoroutine(AppendTextOneByOne(_windowText, "深刻なエラーが発生してシステムを緊急停止します。\n\n", 1));
+                        StartCoroutine(AppendTextOneByOne(windowText, "深刻なエラーが発生してシステムを緊急停止します。\n\n", 1));
 
                     _audioManager.PlaySFX("RobotTalk");
                     yield return new WaitForSeconds(2);
@@ -798,54 +807,54 @@ namespace SingletonPattern
                 }
                 else if (num == 38)
                 {
-                    SetCharacterImage(_momoi, 4);
-                    _momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0);
+                    SetCharacterImage(momoi, 4);
+                    momoi.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0);
 
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
                     yield return new WaitForSeconds(2);
                     SetDialogOn(false);
-                    _momoi.SetActive(true);
-                    _windowText.text = "";
+                    momoi.SetActive(true);
+                    windowText.text = "";
 
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[1];
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[1];
                     yield return new WaitForSeconds(2);
                     // 흙먼지 연출?
 
                     SetDialogOn(true);
-                    _momoi.GetComponent<Animator>().Play("Shiver");
-                    _momoi.transform.Find("MessParent/Mess").GetComponent<Animator>().Play("Mess");
+                    momoi.GetComponent<Animator>().Play("Shiver");
+                    momoi.transform.Find("MessParent/Mess").GetComponent<Animator>().Play("Mess");
                     _audioManager.PlaySFX("Mess");
 
                     _audioManager.PlayBGM("MischievousStep");
                 }
                 else if (num == 39)
                 {
-                    SetCharacterImage(_midori, 7);
-                    _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0);
+                    SetCharacterImage(midori, 7);
+                    midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0);
 
-                    _midori.SetActive(true);
-                    _midori.GetComponent<Animator>().Play("Jumping");
-                    PlayCharacterEffectAnimation(_midori, "Talking");
+                    midori.SetActive(true);
+                    midori.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(midori, "Talking");
                 }
                 else if (num == 40)
                 {
-                    SetCharacterImage(_yuzu, 8);
-                    SetCharacterImage(_aris, 4);
-                    _momoi.SetActive(false);
-                    _midori.SetActive(false);
-                    _aris.SetActive(true);
-                    _yuzu.SetActive(true);
-                    _yuzu.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0);
-                    _aris.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0);
+                    SetCharacterImage(yuzu, 8);
+                    SetCharacterImage(aris, 4);
+                    momoi.SetActive(false);
+                    midori.SetActive(false);
+                    aris.SetActive(true);
+                    yuzu.SetActive(true);
+                    yuzu.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-700, 0);
+                    aris.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(600, 0);
 
-                    _yuzu.GetComponent<Animator>().Play("Shiver");
-                    PlayCharacterEffectAnimation(_yuzu, "Mess");
+                    yuzu.GetComponent<Animator>().Play("Shiver");
+                    PlayCharacterEffectAnimation(yuzu, "Mess");
                 }
                 else if (num == 41)
                 {
-                    SetCharacterImage(_aris, 4);
-                    _aris.GetComponent<Animator>().Play("Shiver");
-                    PlayCharacterEffectAnimation(_aris, "Mess");
+                    SetCharacterImage(aris, 4);
+                    aris.GetComponent<Animator>().Play("Shiver");
+                    PlayCharacterEffectAnimation(aris, "Mess");
                 }
                 else if (num == 42)
                 {
@@ -855,57 +864,57 @@ namespace SingletonPattern
                 else if (num == 43)
                 {
                     SetDialogOn(false);
-                    _WindowFadeOut.gameObject.SetActive(true);
+                    windowFadeOut.gameObject.SetActive(true);
                     // 화면 깜빡이는 연출, DOTween을 사용하면 중간중간 끊기는 느낌이 들어서 따로 구현한 함수 사용
 
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeInImage(0.5f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeInImage(0.5f, windowFadeOut));
                     yield return new WaitForSeconds(0.5f);
 
                     StopCoroutine(_coroutineWindowFadeOut);
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeOutImage(0.3f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeOutImage(0.3f, windowFadeOut));
                     yield return new WaitForSeconds(0.5f);
 
                     StopCoroutine(_coroutineWindowFadeOut);
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeOutImage(0.01f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeOutImage(0.01f, windowFadeOut));
                     yield return new WaitForSeconds(0.2f);
 
                     StopCoroutine(_coroutineWindowFadeOut);
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeInImage(0.5f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeInImage(0.5f, windowFadeOut));
                     yield return new WaitForSeconds(0.5f);
 
                     StopCoroutine(_coroutineWindowFadeOut);
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeOutImage(0.3f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeOutImage(0.3f, windowFadeOut));
                     yield return new WaitForSeconds(0.5f);
 
                     StopCoroutine(_coroutineWindowFadeOut);
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeOutImage(0.01f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeOutImage(0.01f, windowFadeOut));
                     yield return new WaitForSeconds(0.2f);
 
                     StopCoroutine(_coroutineWindowFadeOut);
-                    _coroutineWindowFadeOut = StartCoroutine(_gameManager.FadeInImage(0.5f, _WindowFadeOut));
+                    _coroutineWindowFadeOut = StartCoroutine(GameManager.FadeInImage(0.5f, windowFadeOut));
                     yield return new WaitForSeconds(2);
 
 
                     // 대화창을 가리는 WindowFadeOut 감추고, 배경을 검은색으로 변경
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[0];
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = Color.black;
-                    StartCoroutine(_gameManager.FadeOutImage(4f, _WindowFadeOut));
-                    _yuzu.SetActive(false);
-                    _aris.SetActive(false);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[0];
+                    storyBackground.color = Color.black;
+                    StartCoroutine(GameManager.FadeOutImage(4f, windowFadeOut));
+                    yuzu.SetActive(false);
+                    aris.SetActive(false);
                     _audioManager.PlaySFX("KnockDown"); // 쓰러지는 소리
                     _audioManager.StopBGM();
                     yield return new WaitForSeconds(1);
 
-                    _WindowFadeOut.gameObject.SetActive(false);
+                    windowFadeOut.gameObject.SetActive(false);
                     SetDialogOn(true);
-                    _dialogText.GetComponent<TMP_Text>().fontSize = 60;
+                    dialogText.GetComponent<TMP_Text>().fontSize = 60;
                     _audioManager.PlaySFX("Confuse");
                 }
                 else if (num == 44) // 메인화면으로 이동
                 {
                     CheckAutoProgress();
 
-                    _gameManager.DoFinishStory(0);
+                    _gameManager.DoFinishStory(1);
 
                     yield break;
 
@@ -919,13 +928,13 @@ namespace SingletonPattern
 
                     _audioManager.PlayBGM("MoroseDreamer");
 
-                    _story.transform.Find("Episode/EpisodeMovingBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[3];
-                    _story.transform.Find("Episode/EpisodeMovingBackground").GetComponent<Image>().DOFade(1, 2);
+                    storyMovingBackground.sprite = storyBackgroundImage.backgroundArray[3];
+                    storyMovingBackground.DOFade(1, 2);
                     yield return new WaitForSeconds(2);
-                    _story.transform.Find("Episode/EpisodeMovingBackground").DOLocalMoveY(-100, 3).SetEase(Ease.Linear);
+                    storyMovingBackground.transform.DOLocalMoveY(-100, 3).SetEase(Ease.Linear);
                     yield return new WaitForSeconds(4);
 
-                    _canProgress = true;
+                    _isAvailableProgress = true;
                     _storyNum++;
                     DoStoryProgress();
                     yield break;
@@ -934,11 +943,11 @@ namespace SingletonPattern
                 {
                     SetDialogOn(true);
 
-                    _midori.SetActive(true);
-                    SetCharacterImage(_midori, 10);
-                    _midoriCharacterImage.color = Color.black;
-                    _midoriCharacterImage.DOFade(1, 2);
-                    _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-500, 0);
+                    midori.SetActive(true);
+                    SetCharacterImage(midori, 10);
+                    midoriCharacterImage.color = Color.black;
+                    midoriCharacterImage.DOFade(1, 2);
+                    midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-500, 0);
                 }
                 else if (num == 48)
                 {
@@ -950,10 +959,10 @@ namespace SingletonPattern
                 }
                 else if (num == 53)
                 {
-                    _story.transform.Find("Episode/EpisodeMovingBackground").GetComponent<Image>().DOFade(0, 2);
+                    storyMovingBackground.DOFade(0, 2);
                     yield return new WaitForSeconds(2);
 
-                    _midori.SetActive(false);
+                    midori.SetActive(false);
                 }
                 else if (num == 54)
                 {
@@ -963,21 +972,21 @@ namespace SingletonPattern
                 {
 
                     SetDialogOn(false);
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[4];
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().DOFade(1, 3);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[4];
+                    storyBackground.DOFade(1, 3);
 
-                    _midori.SetActive(true);
-                    _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-                    _midoriCharacterImage.color = new Color(1, 1, 1, 0);
-                    _midoriCharacterImage.DOFade(1, 3);
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    midori.SetActive(true);
+                    midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+                    midoriCharacterImage.color = new Color(1, 1, 1, 0);
+                    midoriCharacterImage.DOFade(1, 3);
+                    _audioManager.FadeOutMusic();
 
                     yield return new WaitForSeconds(3);
 
                     SetDialogOn(true);
-                    SetCharacterImage(_midori, 12);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 12);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
 
                     _audioManager.PlayBGM("Morning");
                 }
@@ -987,16 +996,16 @@ namespace SingletonPattern
                 }
                 else if (num == 57)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Sweat");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Sweat");
                 }
                 else if (num == 58)
                 {
-                    SetCharacterImage(_midori, 18);
+                    SetCharacterImage(midori, 18);
                 }
                 else if (num == 59)
                 {
-                    SetCharacterImage(_midori, 15);
+                    SetCharacterImage(midori, 15);
                 }
                 else if (num == 62)
                 {
@@ -1004,9 +1013,9 @@ namespace SingletonPattern
                 }
                 else if (num == 63)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Mess");
-                    _midori.GetComponent<Animator>().Play("Shiver");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Mess");
+                    midori.GetComponent<Animator>().Play("Shiver");
                 }
                 else if (num == 64)
                 {
@@ -1014,12 +1023,12 @@ namespace SingletonPattern
                 }
                 else if (num == 65)
                 {
-                    SetCharacterImage(_midori, 18);
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 18);
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 66)
                 {
-                    SetCharacterImage(_midori, 15);
+                    SetCharacterImage(midori, 15);
                 }
                 else if (num == 67)
                 {
@@ -1027,32 +1036,32 @@ namespace SingletonPattern
                 }
                 else if (num == 68)
                 {
-                    SetCharacterImage(_midori, 10);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 10);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 69)
                 {
-                    SetCharacterImage(_midori, 12);
-                    PlayCharacterEffectAnimation(_midori, "Question");
+                    SetCharacterImage(midori, 12);
+                    PlayCharacterEffectAnimation(midori, "Question");
                 }
                 else if (num == 70)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Shine");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Shine");
                 }
                 else if (num == 71)
                 {
-                    SetCharacterImage(_midori, 17);
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    SetCharacterImage(midori, 17);
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 72)
                 {
-                    SetCharacterImage(_midori, 10);
+                    SetCharacterImage(midori, 10);
                 }
                 else if (num == 73)
                 {
-                    SetCharacterImage(_midori, 17);
+                    SetCharacterImage(midori, 17);
                 }
                 else if (num == 74)
                 {
@@ -1060,21 +1069,21 @@ namespace SingletonPattern
                 }
                 else if (num == 75)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 76)
                 {
-                    _canProgress = true;
+                    _isAvailableProgress = true;
                     ShowStoryText();
-                    _canProgress = false;
+                    _isAvailableProgress = false;
 
                     yield return new WaitForSeconds(1.5f);
 
                     _audioManager.PlaySFX("Run");
-                    _midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(2000, 1f);
-                    _canProgress = true;
+                    midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(2000, 1f);
+                    _isAvailableProgress = true;
 
                     yield break;
                 }
@@ -1085,23 +1094,23 @@ namespace SingletonPattern
                 else if (num == 78)
                 {
                     SetDialogOn(false);
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
+                    _audioManager.FadeOutMusic();
 
                     yield return new WaitForSeconds(2);
 
                     _audioManager.PlayBGM("RoundAndRound");
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[5];
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[5];
 
-                    SetCharacterImage(_midori, 10);
-                    _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                    SetCharacterImage(midori, 10);
+                    midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
                     yield return new WaitForSeconds(2);
 
                     SetDialogOn(true);
 
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 79)
                 {
@@ -1109,12 +1118,12 @@ namespace SingletonPattern
                 }
                 else if (num == 80)
                 {
-                    SetCharacterImage(_midori, 15);
+                    SetCharacterImage(midori, 15);
                 }
                 else if (num == 81)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Sweat");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Sweat");
                 }
                 else if (num == 82)
                 {
@@ -1122,14 +1131,14 @@ namespace SingletonPattern
                 }
                 else if (num == 83)
                 {
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
 
                     yield return new WaitForSeconds(2);
 
-                    _midori.SetActive(false);
+                    midori.SetActive(false);
                     SetDialogOn(false);
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = Color.black;
-                    _story.transform.Find("Episode/WindowText_Ranking").gameObject.SetActive(true);
+                    storyBackground.color = Color.black;
+                    storyWidget.transform.Find("WindowText_Ranking").gameObject.SetActive(true);
 
                     yield return new WaitForSeconds(2);
                     _audioManager.PlaySFX("Mess");
@@ -1149,23 +1158,23 @@ namespace SingletonPattern
                 }
                 else if (num == 91)
                 {
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
+                    _audioManager.FadeOutMusic();
 
                     yield return new WaitForSeconds(2);
 
                     _audioManager.PlayBGM("KurameNoMyojo");
                     SetDialogOn(false);
-                    SetCharacterImage(_midori, 15);
-                    _midori.SetActive(true);
+                    SetCharacterImage(midori, 15);
+                    midori.SetActive(true);
                     //_audioManager.PlayBGM("RoundAndRound");
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().sprite = _episodeBackgroundImage.backgroundArray[5];
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().color = Color.white;
-                    _story.transform.Find("Episode/WindowText_Ranking").gameObject.SetActive(false);
+                    storyBackground.sprite = storyBackgroundImage.backgroundArray[5];
+                    storyBackground.color = Color.white;
+                    storyWidget.transform.Find("WindowText_Ranking").gameObject.SetActive(false);
 
                     yield return new WaitForSeconds(2);
 
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    midori.GetComponent<Animator>().Play("Jumping");
                     _audioManager.PlaySFX("Shoot");
 
                     yield return new WaitForSeconds(0.3f);
@@ -1182,7 +1191,7 @@ namespace SingletonPattern
 
                     yield return new WaitForSeconds(0.3f);
 
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    midori.GetComponent<Animator>().Play("Jumping");
                     _audioManager.PlaySFX("Shoot");
 
                     yield return new WaitForSeconds(0.3f);
@@ -1202,8 +1211,8 @@ namespace SingletonPattern
                 }
                 else if (num == 93)
                 {
-                    SetCharacterImage(_midori, 17);
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    SetCharacterImage(midori, 17);
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 94)
                 {
@@ -1219,24 +1228,24 @@ namespace SingletonPattern
                 }
                 else if (num == 97)
                 {
-                    SetCharacterImage(_midori, 10);
-                    _midori.GetComponent<Animator>().Play("Jumping");
-                    PlayCharacterEffectAnimation(_midori, "Talking");
+                    SetCharacterImage(midori, 10);
+                    midori.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(midori, "Talking");
 
-                    _canProgress = true;
+                    _isAvailableProgress = true;
                     ShowStoryText();
-                    _canProgress = false;
+                    _isAvailableProgress = false;
 
                     yield return new WaitForSeconds(1);
 
-                    DOTween.Sequence().Append(_midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-200, 0.5f))
-                        .AppendInterval(0.5f).Append(_midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-400, 0.5f));
+                    DOTween.Sequence().Append(midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-200, 0.5f))
+                        .AppendInterval(0.5f).Append(midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(-400, 0.5f));
                     _audioManager.PlaySFX("Step");
 
                     yield return new WaitForSeconds(1);
 
                     _audioManager.PlaySFX("Step");
-                    _canProgress = true;
+                    _isAvailableProgress = true;
 
                     yield break;
                 }
@@ -1246,26 +1255,26 @@ namespace SingletonPattern
                 }
                 else if (num == 100)
                 {
-                    StartCoroutine(DoFadeEpisodeWindowFadeOut());
-                    StartCoroutine(_audioManager.FadeOutMusic());
+                    StartCoroutine(DoFadeStoryWindowFadeOut());
+                    _audioManager.FadeOutMusic();
 
                     yield return new WaitForSeconds(2);
 
                     SetDialogOn(false);
-                    _gameManager._canvas.transform.Find("Story/Episode/UI/Menu").gameObject.SetActive(false); // 열린 메뉴창 숨기기
-                    _gameManager._canvas.transform.Find("Story/Episode/UI").gameObject.SetActive(false); // UI 숨기기
-                    _gameManager._canvas.transform.Find("Story/Episode/Dialog").gameObject.SetActive(false); // 대화창 숨기기
+                    storyWidget.transform.Find("UI").gameObject.SetActive(false); // UI 숨기기
+                    storyWidget.transform.Find("UI/Menu").gameObject.SetActive(false); // 열린 메뉴창 숨기기
+                    storyWidget.transform.Find("Dialog").gameObject.SetActive(false); // 대화창 숨기기
                     _gameManager.DoStartShootingGame();
 
-                    _canProgress = false;
+                    _isAvailableProgress = false;
 
                     yield break;
                 }
                 else if (num == 102)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 103)
                 {
@@ -1274,24 +1283,24 @@ namespace SingletonPattern
                 }
                 else if (num == 104)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 105)
                 {
-                    SetCharacterImage(_midori, 17);
+                    SetCharacterImage(midori, 17);
                 }
                 else if (num == 106)
                 {
-                    SetCharacterImage(_midori, 18);
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    SetCharacterImage(midori, 18);
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 107)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 108)
                 {
@@ -1304,22 +1313,22 @@ namespace SingletonPattern
                 }
                 else if (num == 110)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 111)
                 {
-                    SetCharacterImage(_midori, 18);
+                    SetCharacterImage(midori, 18);
                 }
                 else if (num == 112)
                 {
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 113)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Shine");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Shine");
                 }
                 else if (num == 114)
                 {
@@ -1327,16 +1336,16 @@ namespace SingletonPattern
                 }
                 else if (num == 115)
                 {
-                    SetCharacterImage(_midori, 12);
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    SetCharacterImage(midori, 12);
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 116)
                 {
-                    SetCharacterImage(_midori, 18);
+                    SetCharacterImage(midori, 18);
                 }
                 else if (num == 117)
                 {
-                    SetCharacterImage(_midori, 17);
+                    SetCharacterImage(midori, 17);
                 }
                 else if (num == 118)
                 {
@@ -1344,13 +1353,13 @@ namespace SingletonPattern
                 }
                 else if (num == 119)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Sweat");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Sweat");
                 }
                 else if (num == 120)
                 {
-                    SetCharacterImage(_midori, 17);
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    SetCharacterImage(midori, 17);
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 123)
                 {
@@ -1358,12 +1367,12 @@ namespace SingletonPattern
                 }
                 else if (num == 124)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Sweat");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Sweat");
                 }
                 else if (num == 125)
                 {
-                    SetCharacterImage(_midori, 17);
+                    SetCharacterImage(midori, 17);
                 }
                 else if (num == 126)
                 {
@@ -1371,16 +1380,16 @@ namespace SingletonPattern
                 }
                 else if (num == 127)
                 {
-                    SetCharacterImage(_midori, 12);
+                    SetCharacterImage(midori, 12);
                 }
                 else if (num == 128)
                 {
-                    SetCharacterImage(_midori, 17);
+                    SetCharacterImage(midori, 17);
                 }
                 else if (num == 131)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Sweat");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Sweat");
                 }
                 else if (num == 132)
                 {
@@ -1392,7 +1401,7 @@ namespace SingletonPattern
                 }
                 else if (num == 134)
                 {
-                    SetCharacterImage(_midori, 12);
+                    SetCharacterImage(midori, 12);
                 }
                 else if (num == 135)
                 {
@@ -1400,12 +1409,12 @@ namespace SingletonPattern
                 }
                 else if (num == 136)
                 {
-                    SetCharacterImage(_midori, 18);
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    SetCharacterImage(midori, 18);
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 137)
                 {
-                    SetCharacterImage(_midori, 10);
+                    SetCharacterImage(midori, 10);
                 }
                 else if (num == 138)
                 {
@@ -1413,9 +1422,9 @@ namespace SingletonPattern
                 }
                 else if (num == 139)
                 {
-                    SetCharacterImage(_midori, 12);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 12);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 140)
                 {
@@ -1431,13 +1440,13 @@ namespace SingletonPattern
                 }
                 else if (num == 145)
                 {
-                    PlayCharacterEffectAnimation(_midori, "Silence");
+                    PlayCharacterEffectAnimation(midori, "Silence");
                 }
                 else if (num == 146)
                 {
-                    SetCharacterImage(_midori, 14);
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    SetCharacterImage(midori, 14);
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
                 }
                 else if (num == 147)
                 {
@@ -1445,35 +1454,35 @@ namespace SingletonPattern
                 }
                 else if (num == 150)
                 {
-                    SetCharacterImage(_midori, 13);
-                    PlayCharacterEffectAnimation(_midori, "Shine");
+                    SetCharacterImage(midori, 13);
+                    PlayCharacterEffectAnimation(midori, "Shine");
                 }
                 else if (num == 151)
                 {
-                    PlayCharacterEffectAnimation(_midori, "Talking");
-                    _midori.GetComponent<Animator>().Play("Jumping");
+                    PlayCharacterEffectAnimation(midori, "Talking");
+                    midori.GetComponent<Animator>().Play("Jumping");
 
-                    _canProgress = true;
+                    _isAvailableProgress = true;
                     ShowStoryText();
-                    _canProgress = false;
+                    _isAvailableProgress = false;
 
                     yield return new WaitForSeconds(1.5f);
 
                     _audioManager.PlaySFX("Run");
-                    _midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(2000, 1f);
-                    _canProgress = true;
+                    midori.transform.parent.GetComponent<RectTransform>().DOLocalMoveX(2000, 1f);
+                    _isAvailableProgress = true;
 
                     yield break;
                 }
                 else if (num == 152)
                 {
-                    _story.transform.Find("Episode/EpisodeBackground").GetComponent<Image>().DOColor(Color.black, 2);
+                    storyBackground.DOColor(Color.black, 2);
                 }
                 else if (num == 153) // 메인화면으로 이동
                 {
                     CheckAutoProgress();
 
-                    _gameManager.DoFinishStory(0);
+                    _gameManager.DoFinishStory(2);
 
                     yield break;
                 }
@@ -1481,7 +1490,7 @@ namespace SingletonPattern
 
             if (_isSelectionOn) yield break;  // 선택지를 보여줄 때 대화창 갱신하지 않도록 체크
 
-            _canProgress = true;
+            _isAvailableProgress = true;
 
             ShowStoryText();
         }
@@ -1489,41 +1498,41 @@ namespace SingletonPattern
         #region Method for DoStoryAction Method
         public void SetCharacterImage(GameObject characterName, int num)
         {
-            if (characterName == _momoi)
+            if (characterName == momoi)
             {
-                _momoiCharacterImage.sprite = _momoiImage.imageArray[num];
+                momoiCharacterImage.sprite = momoiImage.imageArray[num];
                 // 모모이의 표정이 0번일 때는 눈을 깜빡이는 모션이 있음
                 if (num == 0)
                 {
-                    _momoiCharacterImage.GetComponent<Animator>().enabled = true;
+                    momoiCharacterImage.GetComponent<Animator>().enabled = true;
                 }
                 else
                 {
-                    _momoiCharacterImage.GetComponent<Animator>().enabled = false;
+                    momoiCharacterImage.GetComponent<Animator>().enabled = false;
                 }
             }
-            else if (characterName == _midori)
+            else if (characterName == midori)
             {
-                _midoriCharacterImage.sprite = _midoriImage.imageArray[num];
+                midoriCharacterImage.sprite = midoriImage.imageArray[num];
             }
-            else if (characterName == _aris)
+            else if (characterName == aris)
             {
-                _arisCharacterImage.sprite = _arisImage.imageArray[num];
+                arisCharacterImage.sprite = arisImage.imageArray[num];
             }
-            else if (characterName == _yuzu)
+            else if (characterName == yuzu)
             {
-                _yuzuCharacterImage.sprite = _yuzuImage.imageArray[num];
+                yuzuCharacterImage.sprite = yuzuImage.imageArray[num];
             }
         }
 
-        private IEnumerator DoFadeEpisodeWindowFadeOut()
+        private IEnumerator DoFadeStoryWindowFadeOut()
         {
-            _WindowFadeOut.gameObject.SetActive(true);
-            DOTween.Sequence().Append(_WindowFadeOut.DOFade(1, 2f)).Append(_WindowFadeOut.DOFade(0, 2f));
+            windowFadeOut.gameObject.SetActive(true);
+            DOTween.Sequence().Append(windowFadeOut.DOFade(1, 2f)).Append(windowFadeOut.DOFade(0, 2f));
 
             yield return new WaitForSeconds(4);
 
-            _WindowFadeOut.gameObject.SetActive(false);
+            windowFadeOut.gameObject.SetActive(false);
         }
 
         // 해당 캐릭터의 이펙트 애니메이션을 재생하는 함수
@@ -1546,6 +1555,19 @@ namespace SingletonPattern
             _textSpeedList.Add(textSpeed); // 텍스트 속도 : (textSpeed) 배
         }
 
+        public bool ClearDialog()
+        {
+            if (_characterNameList == null || _departmentNameList == null || _dialogList == null || _textSpeedList == null)
+                return false;
+            
+            _characterNameList.Clear();
+            _departmentNameList.Clear();
+            _dialogList.Clear();
+            _textSpeedList.Clear();
+
+            return true;
+        }
+
         private IEnumerator AppendTextOneByOne(TMP_Text textBox, string text, float textSpeed)
         {
             for (int i = 0; i < text.Length; i++)
@@ -1558,7 +1580,7 @@ namespace SingletonPattern
         // 스토리에서 텍스트를 나타내는 함수
         private void ShowStoryText()
         {
-            if (_isStoryProgressing)
+            if (_isProgressingStory)
             {
                 StopCoroutine(_coroutineStoryProgress);
                 SetTextBox(_storyNum);
@@ -1571,102 +1593,102 @@ namespace SingletonPattern
         private IEnumerator SetTextBoxCoroutine(int num)
         {
             if (_characterNameList.Count <= num) yield break;
-            _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(false);
+            dialogEnd.SetActive(false);
 
             // 이름 길이에 따라 소속 표시 위치 변경
-            if (_characterName.GetComponent<TMP_Text>().text.Length != _characterNameList[num].Length) // 이름 길이가 변경되었을 때만 동작
+            if (characterName.GetComponent<TMP_Text>().text.Length != _characterNameList[num].Length) // 이름 길이가 변경되었을 때만 동작
             {
-                _departmentName.GetComponent<RectTransform>().anchoredPosition = new Vector2(-457 + ((_characterNameList[num].Length - 2) * 52), _departmentName.GetComponent<RectTransform>().anchoredPosition.y);
+                departmentName.GetComponent<RectTransform>().anchoredPosition = new Vector2(-457 + ((_characterNameList[num].Length - 2) * 52), departmentName.GetComponent<RectTransform>().anchoredPosition.y);
             }
 
             // 얘기 중인 학생의 이미지를 밝게, 얘기하고 있지 않은 학생의 이미지를 어둡게 변경
-            if (_characterNameList[num] == "모모이")
+            if (_characterNameList[num].Equals("모모이"))
             {
-                _momoiCharacterImage.color = new Color(1, 1, 1, _momoiCharacterImage.color.a);
-                _momoiHaloImage.color = new Color(1, 1, 1, _momoiHaloImage.color.a);
+                momoiCharacterImage.color = new Color(1, 1, 1, momoiCharacterImage.color.a);
+                momoiHaloImage.color = new Color(1, 1, 1, momoiHaloImage.color.a);
 
-                _midoriCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _midoriCharacterImage.color.a);
-                _midoriHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _midoriHaloImage.color.a);
+                midoriCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, midoriCharacterImage.color.a);
+                midoriHaloImage.color = new Color(0.5f, 0.5f, 0.5f, midoriHaloImage.color.a);
 
-                _arisCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _arisCharacterImage.color.a);
-                _arisHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _arisHaloImage.color.a);
+                arisCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, arisCharacterImage.color.a);
+                arisHaloImage.color = new Color(0.5f, 0.5f, 0.5f, arisHaloImage.color.a);
 
-                _yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuCharacterImage.color.a);
-                _yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuHaloImage.color.a);
+                yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, yuzuCharacterImage.color.a);
+                yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, yuzuHaloImage.color.a);
             }
-            else if (_characterNameList[num] == "미도리")
+            else if (_characterNameList[num].Equals("미도리"))
             {
-                _momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiCharacterImage.color.a);
-                _momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiHaloImage.color.a);
+                momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, momoiCharacterImage.color.a);
+                momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, momoiHaloImage.color.a);
 
-                _midoriCharacterImage.color = new Color(1, 1, 1, _midoriCharacterImage.color.a);
-                _midoriHaloImage.color = new Color(1, 1, 1, _midoriHaloImage.color.a);
+                midoriCharacterImage.color = new Color(1, 1, 1, midoriCharacterImage.color.a);
+                midoriHaloImage.color = new Color(1, 1, 1, midoriHaloImage.color.a);
 
-                _arisCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _arisCharacterImage.color.a);
-                _arisHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _arisHaloImage.color.a);
+                arisCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, arisCharacterImage.color.a);
+                arisHaloImage.color = new Color(0.5f, 0.5f, 0.5f, arisHaloImage.color.a);
 
-                _yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuCharacterImage.color.a);
-                _yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuHaloImage.color.a);
+                yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, yuzuCharacterImage.color.a);
+                yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, yuzuHaloImage.color.a);
             }
-            else if (_characterNameList[num] == "아리스")
+            else if (_characterNameList[num].Equals("아리스"))
             {
-                _momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiCharacterImage.color.a);
-                _momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiHaloImage.color.a);
+                momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, momoiCharacterImage.color.a);
+                momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, momoiHaloImage.color.a);
 
-                _midoriCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _midoriCharacterImage.color.a);
-                _midoriHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _midoriHaloImage.color.a);
+                midoriCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, midoriCharacterImage.color.a);
+                midoriHaloImage.color = new Color(0.5f, 0.5f, 0.5f, midoriHaloImage.color.a);
 
-                _arisCharacterImage.color = new Color(1, 1, 1, _arisCharacterImage.color.a);
-                _arisHaloImage.color = new Color(1, 1, 1, _arisHaloImage.color.a);
+                arisCharacterImage.color = new Color(1, 1, 1, arisCharacterImage.color.a);
+                arisHaloImage.color = new Color(1, 1, 1, arisHaloImage.color.a);
 
-                _yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuCharacterImage.color.a);
-                _yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _yuzuHaloImage.color.a);
+                yuzuCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, yuzuCharacterImage.color.a);
+                yuzuHaloImage.color = new Color(0.5f, 0.5f, 0.5f, yuzuHaloImage.color.a);
             }
-            else if (_characterNameList[num] == "유즈")
+            else if (_characterNameList[num].Equals("유즈"))
             {
-                _momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiCharacterImage.color.a);
-                _momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _momoiHaloImage.color.a);
+                momoiCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, momoiCharacterImage.color.a);
+                momoiHaloImage.color = new Color(0.5f, 0.5f, 0.5f, momoiHaloImage.color.a);
 
-                _midoriCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _midoriCharacterImage.color.a);
-                _midoriHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _midoriHaloImage.color.a);
+                midoriCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, midoriCharacterImage.color.a);
+                midoriHaloImage.color = new Color(0.5f, 0.5f, 0.5f, midoriHaloImage.color.a);
 
-                _arisCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, _arisCharacterImage.color.a);
-                _arisHaloImage.color = new Color(0.5f, 0.5f, 0.5f, _arisHaloImage.color.a);
+                arisCharacterImage.color = new Color(0.5f, 0.5f, 0.5f, arisCharacterImage.color.a);
+                arisHaloImage.color = new Color(0.5f, 0.5f, 0.5f, arisHaloImage.color.a);
 
-                _yuzuCharacterImage.color = new Color(1, 1, 1, _yuzuCharacterImage.color.a);
-                _yuzuHaloImage.color = new Color(1, 1, 1, _yuzuHaloImage.color.a);
+                yuzuCharacterImage.color = new Color(1, 1, 1, yuzuCharacterImage.color.a);
+                yuzuHaloImage.color = new Color(1, 1, 1, yuzuHaloImage.color.a);
             }
 
 
-            _characterName.GetComponent<TMP_Text>().text = _characterNameList[num];
-            _departmentName.GetComponent<TMP_Text>().text = _departmentNameList[num];
-            _dialogText.GetComponent<TMP_Text>().text = "";
-            _isStoryProgressing = true;
+            characterName.GetComponent<TMP_Text>().text = _characterNameList[num];
+            departmentName.GetComponent<TMP_Text>().text = _departmentNameList[num];
+            dialogText.GetComponent<TMP_Text>().text = "";
+            _isProgressingStory = true;
             float textSpeed = _textSpeedList[num];
             for (int i = 0; i < _dialogList[num].Length; i++)
             {
-                _dialogText.GetComponent<TMP_Text>().text += _dialogList[num][i];
+                dialogText.GetComponent<TMP_Text>().text += _dialogList[num][i];
                 yield return new WaitForSeconds(0.05f / textSpeed);
             }
             _storyNum++;
             DoStoryJump(); // 선택지로 갈린 스토리 번호 이동 체크
 
-            _isStoryProgressing = false;
-            _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(true);
+            _isProgressingStory = false;
+            dialogEnd.SetActive(true);
         }
 
         // 대화 나오고 있을 때 클릭하면 한 번에 출력되도록 해주는 함수
         private void SetTextBox(int num)
         {
             if (_characterNameList.Count <= num) return;
-            _characterName.GetComponent<TMP_Text>().text = _characterNameList[num];
-            _departmentName.GetComponent<TMP_Text>().text = _departmentNameList[num];
-            _dialogText.GetComponent<TMP_Text>().text = _dialogList[num];
+            characterName.GetComponent<TMP_Text>().text = _characterNameList[num];
+            departmentName.GetComponent<TMP_Text>().text = _departmentNameList[num];
+            dialogText.GetComponent<TMP_Text>().text = _dialogList[num];
             _storyNum++;
             DoStoryJump(); // 선택지로 갈린 스토리 번호 이동 체크
 
-            _isStoryProgressing = false;
-            _story.transform.Find("Episode/Dialog/DialogEnd").gameObject.SetActive(true);
+            _isProgressingStory = false;
+            dialogEnd.SetActive(true);
         }
 
         #endregion Method for Text Process
@@ -1675,26 +1697,26 @@ namespace SingletonPattern
 
         public IEnumerator ShowSadMidori()
         {
-            if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Shiver")) yield break;
+            if (midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Shiver")) yield break;
 
-            SetCharacterImage(_midori, 14);
-            _midori.GetComponent<Animator>().Play("Shiver");
+            SetCharacterImage(midori, 14);
+            midori.GetComponent<Animator>().Play("Shiver");
 
             yield return new WaitForSeconds(2f);
 
-            SetCharacterImage(_midori, 10);
+            SetCharacterImage(midori, 10);
         }
 
         public IEnumerator ShowHappyMidori()
         {
-            if (_midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Jumping")) yield break;
+            if (midori.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Jumping")) yield break;
 
-            SetCharacterImage(_midori, 13);
-            _midori.GetComponent<Animator>().Play("Jumping");
+            SetCharacterImage(midori, 13);
+            midori.GetComponent<Animator>().Play("Jumping");
 
             yield return new WaitForSeconds(1f);
 
-            SetCharacterImage(_midori, 10);
+            SetCharacterImage(midori, 10);
         }
 
         public void DoShootingGameEnd(string endType)
@@ -1706,7 +1728,7 @@ namespace SingletonPattern
         {
             yield return new WaitForSeconds(2);
 
-            StartCoroutine(DoFadeEpisodeWindowFadeOut());
+            StartCoroutine(DoFadeStoryWindowFadeOut());
 
             yield return new WaitForSeconds(2);
 
@@ -1714,18 +1736,18 @@ namespace SingletonPattern
 
             _gameManager.DoFinishShootingGame();
 
-            _midori.SetActive(true);
-            _midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-400, 0);
-            _midori.transform.parent.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+            midori.SetActive(true);
+            midori.transform.parent.GetComponent<RectTransform>().anchoredPosition = new Vector2(-400, 0);
+            midori.transform.parent.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
 
-            if (endType.Equals("GameOver")) SetCharacterImage(_midori, 17);
-            else SetCharacterImage(_midori, 13);
+            if (endType.Equals("GameOver")) SetCharacterImage(midori, 17);
+            else SetCharacterImage(midori, 13);
 
             yield return new WaitForSeconds(2);
 
             SetDialogOn(true);
-            _gameManager._canvas.transform.Find("Story/Episode/UI").gameObject.SetActive(true);
-            _canProgress = true;
+            storyWidget.transform.Find("UI").gameObject.SetActive(true);
+            _isAvailableProgress = true;
 
             if (endType.Equals("GameOver")) _storyNum = 101;
             else if (endType.Equals("GameWin")) _storyNum = 104;
@@ -1739,10 +1761,11 @@ namespace SingletonPattern
         // 스토리를 진행시키는 함수
         public void DoStoryProgress()
         {
-            if (!_canProgress)
+            if (!_isAvailableProgress)
             {
                 return;
             }
+            _elapsedTime = 0f;
             StartCoroutine(DoStoryAction(_storyNum));
         }
 
@@ -1753,9 +1776,72 @@ namespace SingletonPattern
         }
 
         // 외부에서 스토리를 진행할 수 있는 상태인지 여부를 변경하는 함수
-        public void SetIsCanProgress(bool isCanProgress)
+        public void SetIsAvailableProgress(bool isCanProgress)
         {
-            _canProgress = isCanProgress;
+            _isAvailableProgress = isCanProgress;
+        }
+        
+        // 스토리 진행 중 화면을 클릭했을 때 작동하는 함수
+        private void OnClickStoryProgressBtn()
+        {
+            if (storyWidget.transform.Find("UI/Menu").gameObject.activeSelf) storyWidget.transform.Find("UI/Menu").gameObject.SetActive(false);
+            if (storyWidget.transform.Find("UI").gameObject.activeSelf == false)
+            {
+                storyWidget.transform.Find("UI").gameObject.SetActive(true);
+                if (!_isDialogOff) storyWidget.transform.Find("Dialog").gameObject.SetActive(true);
+            }
+            else
+            {
+                DoStoryProgress();
+            }
+        }
+
+        private void OnClickAutoBtn()
+        {
+            DoAutoProgress();
+            _audioManager.PlaySFX("ButtonClick_BlueArchive");
+        }
+
+        private void OnClickMenuBtn()
+        {
+            // 메뉴창 여닫기
+            storyWidget.transform.Find("UI/Menu").gameObject
+                .SetActive(!storyWidget.transform.Find("UI/Menu").gameObject.activeSelf);
+            _audioManager.PlaySFX("ButtonClick_BlueArchive");
+        }
+
+        private void OnClickHideUI()
+        {
+            CheckAutoProgress(); // 스토리가 자동으로 진행 중이라면 멈추도록 함
+
+            storyWidget.transform.Find("UI/Menu").gameObject.SetActive(false); // 열린 메뉴창 숨기기
+            storyWidget.transform.Find("UI").gameObject.SetActive(false); // UI 숨기기
+            storyWidget.transform.Find("Dialog").gameObject.SetActive(false); // 대화창 숨기기
+            _audioManager.PlaySFX("ButtonClick_BlueArchive");
+        }
+
+        private void OnClickSkipBtn()
+        {
+            // 개선 필요
+            _gameManager.DoFinishStory(currentStage);
+        }
+
+        private void OnClickSingleSelection()
+        {
+            StartCoroutine(SelectedSelection(0));
+            _audioManager.PlaySFX("ButtonClick_BlueArchive");
+        }
+
+        private void OnClickSelection1()
+        {
+            StartCoroutine(SelectedSelection(1));
+            _audioManager.PlaySFX("ButtonClick_BlueArchive");
+        }
+
+        private void OnClickSelection2()
+        {
+            StartCoroutine(SelectedSelection(2));
+            _audioManager.PlaySFX("ButtonClick_BlueArchive");
         }
     }
 }

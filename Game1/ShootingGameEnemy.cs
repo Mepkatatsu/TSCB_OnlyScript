@@ -3,42 +3,39 @@ using SingletonPattern;
 using System.Collections;
 using UnityEngine;
 
-public class EnemyController : MonoBehaviour
+public class ShootingGameEnemy : MonoBehaviour
 {
-    ShootingGameManager _shootingGameManager;
-    [SerializeField] private int _enemyMaxHP = 5;
-    [SerializeField] private float _attackDelay = 3;
-    [SerializeField] private bool _isThisBoss = false;
+    private ShootingGameManager _shootingGameManager;
+    [SerializeField] private int enemyMaxHp = 5;
+    [SerializeField] private float attackDelay = 3;
+    [SerializeField] private bool isThisBoss;
 
-    private int _enemyHP = 5;
+    public int EnemyHP { get; private set; } = 5;
 
-    private bool _isReadyToAttack = false;
+    private bool _isAvailableAttack;
 
     private Sequence _sequence;
 
     private void Awake()
     {
-        if (_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
+        if (_shootingGameManager == null)
+            _shootingGameManager = ShootingGameManager.Instance;
     }
 
     public void InitializeEnemy()
     {
         StopAllCoroutines();
 
-        _isReadyToAttack = false;
+        _isAvailableAttack = false;
 
         SetEnemyMaxHP();
 
-        if (!_isThisBoss) StartCoroutine(DoEnemyAttack());
-        else
-        {
-            StartCoroutine(DoBossMove());
-        }
+        StartCoroutine(!isThisBoss ? DoEnemyAttack() : DoBossMove());
     }
 
     public void SetEnemyMaxHP()
     {
-        _enemyHP = _enemyMaxHP;
+        EnemyHP = enemyMaxHp;
     }
 
     public void StopMoving()
@@ -54,9 +51,9 @@ public class EnemyController : MonoBehaviour
         {
             for (int i = 0; i < 5; i++)
             {
-                // Á×¾úÀ» ¶§´Â ½ºÅ³ÀÌ ½ÃÀüµÇÁö ¾Ê°í, Àû ¼ÒÈ¯ÇÏÁö ¾ÊÀ½ (ÃÖ¼Ò 1ÃÊ ´ë±â)
+                // ì£½ì—ˆì„ ë•ŒëŠ” ìŠ¤í‚¬ì´ ì‹œì „ë˜ì§€ ì•Šê³ , ì  ì†Œí™˜í•˜ì§€ ì•ŠìŒ (ìµœì†Œ 1ì´ˆ ëŒ€ê¸°)
 
-                while (!_shootingGameManager.GetIsAlivePlane())
+                while (!_shootingGameManager.IsAlivePlane)
                 {
                     yield return new WaitForSeconds(1);
                 }
@@ -101,20 +98,20 @@ public class EnemyController : MonoBehaviour
     {
         while(true)
         {
-            if (!_shootingGameManager.GetIsAlivePlane())
+            if (!_shootingGameManager.IsAlivePlane)
             {
-                _isReadyToAttack = false;
+                _isAvailableAttack = false;
                 yield return new WaitForSeconds(1);
             }
-            else if (_isReadyToAttack == true)
+            else if (_isAvailableAttack == true)
             {
                 _shootingGameManager.ShootEnemyBulletToMidoriPlane(gameObject);
-                yield return new WaitForSeconds(_attackDelay);
+                yield return new WaitForSeconds(attackDelay);
             }
-            // Àû ½ºÆù Á÷ÈÄ, ¾Æ±º ºÎÈ° Á÷ÈÄ¿¡ ÃÑ¾ËÀ» ¹ß»çÇÏÁö ¾Êµµ·Ï ÃÖ¼Ò ´ë±â ½Ã°£ ¼³Á¤
+            // ì  ìŠ¤í° ì§í›„, ì•„êµ° ë¶€í™œ ì§í›„ì— ì´ì•Œì„ ë°œì‚¬í•˜ì§€ ì•Šë„ë¡ ìµœì†Œ ëŒ€ê¸° ì‹œê°„ ì„¤ì •
             else
             {
-                _isReadyToAttack = true;
+                _isAvailableAttack = true;
                 yield return new WaitForSeconds(1);
             }
         }
@@ -151,7 +148,7 @@ public class EnemyController : MonoBehaviour
         StartCoroutine(DoBezierCurves2Coroutine(startPosition, controlPosition1, controlPosition2, targetPosition, speed));
     }
 
-    public IEnumerator DoBezierCurves2Coroutine(Vector2 startPosition, Vector2 controlPosition1, Vector2 controlPosition2, Vector2 targetPosition, float speed)
+    private IEnumerator DoBezierCurves2Coroutine(Vector2 startPosition, Vector2 controlPosition1, Vector2 controlPosition2, Vector2 targetPosition, float speed)
     {
         float time = 0;
 
@@ -166,12 +163,12 @@ public class EnemyController : MonoBehaviour
                 time = 0;
             }
 
-            Vector2 position1 = Vector2.Lerp(startPosition, controlPosition1, time);
-            Vector2 position2 = Vector2.Lerp(controlPosition1, controlPosition2, time);
-            Vector2 position3 = Vector2.Lerp(controlPosition2, targetPosition, time);
+            var position1 = Vector2.Lerp(startPosition, controlPosition1, time);
+            var position2 = Vector2.Lerp(controlPosition1, controlPosition2, time);
+            var position3 = Vector2.Lerp(controlPosition2, targetPosition, time);
 
-            Vector2 position4 = Vector2.Lerp(position1, position2, time);
-            Vector2 position5 = Vector2.Lerp(position2, position3, time);
+            var position4 = Vector2.Lerp(position1, position2, time);
+            var position5 = Vector2.Lerp(position2, position3, time);
 
             gameObject.GetComponent<RectTransform>().anchoredPosition = Vector2.Lerp(position4, position5, time);
 
@@ -198,13 +195,8 @@ public class EnemyController : MonoBehaviour
     }
     #endregion Normal enemy action
 
-    public int GetEnemyHP()
-    {
-        return _enemyHP;
-    }
-
     public void SetEnemyHP(int hp)
     {
-        _enemyHP = hp;
+        EnemyHP = hp;
     }
 }
