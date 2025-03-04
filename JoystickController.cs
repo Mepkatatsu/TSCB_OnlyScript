@@ -1,4 +1,3 @@
-using SingletonPattern;
 using UnityEngine;
 using UnityEngine.EventSystems;
 

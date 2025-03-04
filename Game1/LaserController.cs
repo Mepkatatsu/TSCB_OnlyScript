@@ -1,4 +1,3 @@
-using SingletonPattern;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +6,6 @@ public class LaserController : MonoBehaviour
 {
     private LineRenderer _lineRenderer;
     private EdgeCollider2D _edgeCollider;
-    private ShootingGameManager _shootingGameManager;
 
     private List<Vector2> _linePositionList;
     private Vector2 _startPosition;
@@ -19,11 +17,6 @@ public class LaserController : MonoBehaviour
     private const int XRightEnd = 390;
     private const int YDownEnd = -570;
     private const int YUpEnd = 570;
-
-    private void Awake()
-    {
-        if (_shootingGameManager == null) _shootingGameManager = ShootingGameManager.Instance;
-    }
 
     public void SetIsAvailableMoveLaser(bool canMoveLaser)
     {
@@ -87,7 +80,7 @@ public class LaserController : MonoBehaviour
         _lineRenderer.startColor = laserColor;
         _lineRenderer.endColor = laserColor;
         
-        _shootingGameManager.SetIsShootingLaser(true);
+        ShootingGameManager.Instance.SetIsShootingLaser(true);
 
         while (_lineRenderer.startWidth < 0.3f)
         {
@@ -110,7 +103,7 @@ public class LaserController : MonoBehaviour
         _lineRenderer.startColor = Color.red;
         _lineRenderer.endColor = Color.red;
 
-        _shootingGameManager.SetIsShootingLaser(false);
+        ShootingGameManager.Instance.SetIsShootingLaser(false);
     }
 
     private void SetColliderPosition()
@@ -139,11 +132,11 @@ public class LaserController : MonoBehaviour
         while (_isAvailableMoveLaser)
         {
             // 보스의 눈에서 레이저가 나가도록 위치 설정
-            _startPosition = new Vector2(_shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.x + 28,
-            _shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.y - 2);
+            _startPosition = new Vector2(ShootingGameManager.Instance.bossEnemy.GetComponent<RectTransform>().anchoredPosition.x + 28,
+                ShootingGameManager.Instance.bossEnemy.GetComponent<RectTransform>().anchoredPosition.y - 2);
 
             _targetPosition = ExtendDirection(_startPosition,
-                _shootingGameManager._midoriPlane.GetComponent<RectTransform>().anchoredPosition);
+                ShootingGameManager.Instance.midoriPlane.GetComponent<RectTransform>().anchoredPosition);
 
             _lineRenderer.SetPosition(0, _startPosition);
             _lineRenderer.SetPosition(1, _targetPosition);
@@ -153,8 +146,8 @@ public class LaserController : MonoBehaviour
 
         while (!_isAvailableMoveLaser)
         {
-            _startPosition = new Vector2(_shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.x + 28,
-            _shootingGameManager._bossEnemy.GetComponent<RectTransform>().anchoredPosition.y - 2);
+            _startPosition = new Vector2(ShootingGameManager.Instance.bossEnemy.GetComponent<RectTransform>().anchoredPosition.x + 28,
+                ShootingGameManager.Instance.bossEnemy.GetComponent<RectTransform>().anchoredPosition.y - 2);
 
             _lineRenderer.SetPosition(0, _startPosition);
 

@@ -1,6 +1,6 @@
 using System.Collections;
+using CoreLib;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [System.Serializable]
 public class Sound
@@ -9,102 +9,101 @@ public class Sound
     public AudioClip clip;
 }
 
-namespace SingletonPattern
+public class AudioManager : Singleton<AudioManager>
 {
-    public class AudioManager : Singleton<AudioManager>
+    public float fadeOutSecond = 1;
+
+    [SerializeField] private Sound[] sfx;
+    [SerializeField] private Sound[] bgm;
+
+    [SerializeField] private AudioSource bgmPlayer;
+    [SerializeField] private AudioSource[] sfxPlayer;
+
+    private Coroutine _fadeOutMusicCoroutine;
+    private WaitForSeconds _fadeOutWaitForSeconds;
+
+    public override void Awake()
     {
-        public float fadeOutSecond = 1;
-        
-        [SerializeField] private Sound[] sfx;
-        [SerializeField] private Sound[] bgm;
+        _fadeOutWaitForSeconds = new WaitForSeconds(fadeOutSecond / 100);
+        base.Awake();
+    }
 
-        [SerializeField] private AudioSource bgmPlayer;
-        [SerializeField] private AudioSource[] sfxPlayer;
-        
-        private Coroutine _fadeOutMusicCoroutine;
-        private WaitForSeconds _fadeOutWaitForSeconds;
+    public void FadeOutMusic()
+    {
+        _fadeOutMusicCoroutine = StartCoroutine(FadeOutMusicCoroutine());
+    }
 
-        public override void Awake()
+    private IEnumerator FadeOutMusicCoroutine()
+    {
+        var volumeTick = bgmPlayer.volume / 100;
+
+        while (bgmPlayer.volume > 0)
         {
-            _fadeOutWaitForSeconds = new WaitForSeconds(fadeOutSecond / 100);
-            base.Awake();
+            bgmPlayer.volume -= volumeTick;
+            yield return _fadeOutWaitForSeconds;
         }
 
-        public void FadeOutMusic()
+        StopBGM();
+        bgmPlayer.volume = ClientSaveData.BGMVolume;
+    }
+
+    public void PlayBGM(string bgmName)
+    {
+        if (_fadeOutMusicCoroutine != null)
         {
-            _fadeOutMusicCoroutine = StartCoroutine(FadeOutMusicCoroutine());
+            StopCoroutine(_fadeOutMusicCoroutine);
+            SetBGMVolume(ClientSaveData.BGMVolume);
         }
 
-        private IEnumerator FadeOutMusicCoroutine()
+        for (int i = 0; i < bgm.Length; i++)
         {
-            var volumeTick = bgmPlayer.volume / 100;
+            if (!bgmName.Equals(bgm[i].name))
+                continue;
 
-            while (bgmPlayer.volume > 0)
-            {
-                bgmPlayer.volume -= volumeTick;
-                yield return _fadeOutWaitForSeconds;
-            }
-            StopBGM();
-            bgmPlayer.volume = PlayerPrefs.GetFloat("BGM");
+            bgmPlayer.clip = bgm[i].clip;
+            bgmPlayer.Play();
         }
+    }
 
-        public void PlayBGM(string bgmName)
+    public void StopBGM()
+    {
+        bgmPlayer.Stop();
+    }
+
+    public void PlaySFX(string sfxName)
+    {
+        for (int i = 0; i < sfx.Length; i++)
         {
-            if (_fadeOutMusicCoroutine != null)
-            {
-                StopCoroutine(_fadeOutMusicCoroutine);
-                SetBGMVolume(PlayerPrefs.GetFloat("BGM"));
-            }
+            if (!sfxName.Equals(sfx[i].name))
+                continue;
 
-            for (int i = 0; i < bgm.Length; i++)
+            for (int j = 0; j < sfxPlayer.Length; j++)
             {
-                if (!bgmName.Equals(bgm[i].name)) 
+                if (sfxPlayer[j].isPlaying)
                     continue;
-                
-                bgmPlayer.clip = bgm[i].clip;
-                bgmPlayer.Play();
-            }
-        }
 
-        public void StopBGM()
-        {
-            bgmPlayer.Stop();
-        }
-
-        public void PlaySFX(string sfxName)
-        {
-            for (int i = 0; i < sfx.Length; i++)
-            {
-                if (!sfxName.Equals(sfx[i].name))
-                    continue;
-                
-                for (int j = 0; j < sfxPlayer.Length; j++)
-                {
-                    if (sfxPlayer[j].isPlaying)
-                        continue;
-                    
-                    sfxPlayer[j].clip = sfx[i].clip;
-                    sfxPlayer[j].Play();
-                    return;
-                }
-                
-                Debug.LogWarning("모든 오디오 플레이어가 재생중입니다.");
+                sfxPlayer[j].clip = sfx[i].clip;
+                sfxPlayer[j].Play();
                 return;
             }
-            Debug.LogError($"{sfxName} 이름의 효과음이 없습니다.");
+
+            Debug.LogWarning("모든 오디오 플레이어가 재생중입니다.");
+            return;
         }
 
-        public void SetBGMVolume(float volume)
-        {
-            bgmPlayer.volume = volume;
-        }
+        Debug.LogError($"{sfxName} 이름의 효과음이 없습니다.");
+    }
 
-        public void SetSFXVolume(float volume)
+    public void SetBGMVolume(float volume)
+    {
+        bgmPlayer.volume = volume;
+    }
+
+    public void SetSFXVolume(float volume)
+    {
+        for (int i = 0; i < sfxPlayer.Length; i++)
         {
-            for (int i = 0; i < sfxPlayer.Length; i++)
-            {
-                sfxPlayer[i].volume = volume;
-            }
+            sfxPlayer[i].volume = volume;
         }
     }
 }

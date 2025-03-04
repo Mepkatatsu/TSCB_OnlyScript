@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace SingletonPattern
+namespace CoreLib
 {
     public class Singleton<T> : MonoBehaviour where T: Component
     {
@@ -11,12 +11,12 @@ namespace SingletonPattern
         {
             get
             {
-                if (_instance != null) 
+                if (_instance) 
                     return _instance;
                 
                 _instance = FindObjectOfType<T>();
 
-                if (_instance != null)
+                if (_instance)
                     return _instance;
                 
                 return null;
@@ -25,14 +25,14 @@ namespace SingletonPattern
 
         public virtual void Awake()
         {
-            if (_instance == null)
+            if (!_instance)
             {
                 _instance = this as T;
                 DontDestroyOnLoad(gameObject);
             }
             else
             {
-                Destroy(gameObject);
+                DontDestroyOnLoad(gameObject);
             }
         }
     }

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using SingletonPattern;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class SelectStageWindow : MonoBehaviour
@@ -34,19 +32,8 @@ public class SelectStageWindow : MonoBehaviour
     [SerializeField] private Sprite storyReadImage;
     [SerializeField] private Sprite storyUnreadImage;
 
-    private GameManager _gameManager;
-    private StoryManager _storyManager;
-    private AudioManager _audioManager;
-
     private void Awake()
     {
-        if (!_gameManager)
-            _gameManager = GameManager.Instance;
-        if (!_storyManager)
-            _storyManager = StoryManager.Instance;
-        if (!_audioManager)
-            _audioManager = AudioManager.Instance;
-        
         if (selectStageQuitBtn)
             selectStageQuitBtn.onClick.AddListener(OnClickStageSelectQuitBtn);
         
@@ -59,15 +46,13 @@ public class SelectStageWindow : MonoBehaviour
 
     public void DoStartStory(int storyNum)
     {
-        _storyManager.currentStage = storyNum;
+        StoryManager.Instance.currentStage = storyNum;
 
-        int stageProgress = 0;
-        if (PlayerPrefs.HasKey("StageProgress"))
-            stageProgress = PlayerPrefs.GetInt("StageProgress");
+        var stageProgress = ClientSaveData.StageProgress;
         
         if (storyNum == 1)
         {
-            _storyManager.SetStoryNumber(0); // 1화 시작 부분
+            StoryManager.Instance.SetStoryNumber(0); // 1화 시작 부분
 
             // TODO: key로 설정하게 변경
             if(LocalizeManager.language == LocalizeManager.Language.Korean)
@@ -85,18 +70,18 @@ public class SelectStageWindow : MonoBehaviour
         {
             if (stageProgress < 1)
             {
-                _audioManager.PlaySFX("ButtonCancel");
+                AudioManager.Instance.PlaySFX("ButtonCancel");
                 return;
             }
 
             // 현재 일본어 1장까지만 번역되어있음
             if (LocalizeManager.language == LocalizeManager.Language.Japanese)
             {
-                _audioManager.PlaySFX("ButtonCancel");
+                AudioManager.Instance.PlaySFX("ButtonCancel");
                 return;
             }
 
-            _storyManager.SetStoryNumber(45); // 2화 시작 부분
+            StoryManager.Instance.SetStoryNumber(45); // 2화 시작 부분
 
             if (LocalizeManager.language == LocalizeManager.Language.Korean)
             {
@@ -113,16 +98,16 @@ public class SelectStageWindow : MonoBehaviour
         {
             if (stageProgress < 2)
             {
-                _audioManager.PlaySFX("ButtonCancel");
+                AudioManager.Instance.PlaySFX("ButtonCancel");
                 return;
             }
 
             // 현재 3화 미구현
-            _audioManager.PlaySFX("ButtonCancel");
+            AudioManager.Instance.PlaySFX("ButtonCancel");
             return;
 
             /*
-            _storyManager.SetStoryNumber(0); // 3화 시작 부분
+            StoryManager.Instance.SetStoryNumber(0); // 3화 시작 부분
             storyStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "제3화";
             storyStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "제3화";
             */
@@ -131,30 +116,28 @@ public class SelectStageWindow : MonoBehaviour
         {
             if (stageProgress < 3)
             {
-                _audioManager.PlaySFX("ButtonCancel");
+                AudioManager.Instance.PlaySFX("ButtonCancel");
                 return;
             }
 
             // 현재 4화 미구현
-            _audioManager.PlaySFX("ButtonCancel");
+            AudioManager.Instance.PlaySFX("ButtonCancel");
             return;
 
             /*
-            _storyManager.SetStoryNumber(0); // 4화 시작 부분
+            StoryManager.Instance.SetStoryNumber(0); // 4화 시작 부분
             storyStartText.transform.Find("ChapterNumber").GetComponent<TMP_Text>().text = "제4화";
             storyStartText.transform.Find("ChapterName").GetComponent<TMP_Text>().text = "제4화";
             */
         }
         
-        _audioManager.PlaySFX("ButtonStart");
-        StartCoroutine(_storyManager.InitializeStory());
+        AudioManager.Instance.PlaySFX("ButtonStart");
+        StartCoroutine(StoryManager.Instance.InitializeStory());
     }
 
     public void SetSelectStage()
     {
-        int stageProgress = 0;
-        if (PlayerPrefs.HasKey("StageProgress"))
-            stageProgress = PlayerPrefs.GetInt("StageProgress");
+        var stageProgress = ClientSaveData.StageProgress;
 
         for (var i = 0; i < selectStageList.Count; i++)
         {
@@ -170,7 +153,7 @@ public class SelectStageWindow : MonoBehaviour
                 selectStageList[i].storyReadImage.sprite = storyReadImage;
             }
             
-            selectStageList[i].chapterNameText.GetComponent<FontLocalizer>().SetLocalizeText();
+            selectStageList[i].chapterNameText.GetComponent<TextLocalizer>().SetLocalizeText();
             selectStageList[i].storyStartBtn.image.sprite = GetStageEnterImage(LocalizeManager.language, false);
         }
     }
@@ -193,13 +176,11 @@ public class SelectStageWindow : MonoBehaviour
     
     private void OnClickStoryStartBtn(int stageNum)
     {
-        int stageProgress = 0;
-        if (PlayerPrefs.HasKey("StageProgress"))
-            stageProgress = PlayerPrefs.GetInt("StageProgress");
+        var stageProgress = ClientSaveData.StageProgress;
 
         if (stageNum > 1 && stageProgress + 1 < stageNum)
         {
-            _audioManager.PlaySFX("ButtonCancel");
+            AudioManager.Instance.PlaySFX("ButtonCancel");
             return;
         }
         
@@ -208,7 +189,7 @@ public class SelectStageWindow : MonoBehaviour
     
     private void OnClickStageSelectQuitBtn()
     {
-        _audioManager.PlaySFX("ButtonCancel");
+        AudioManager.Instance.PlaySFX("ButtonCancel");
         gameObject.SetActive(false);
     }
 }

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using SingletonPattern;
+using CoreLib;
 using TMPro;
 using UnityEngine;
 
@@ -24,19 +24,14 @@ public class LocalizeManager : Singleton<LocalizeManager>
 
     public static Language language = Language.Korean;
 
-    private List<FontLocalizer> _fontLocalizerList = new List<FontLocalizer>();
-
-    public override void Awake()
-    {
-        
-    }
+    private List<TextLocalizer> _fontLocalizerList = new List<TextLocalizer>();
 
     public void ChangeLanguage(Language changeLanguage)
     {
         language = changeLanguage;
         
         if (StoryManager.Instance.ClearDialog())
-            GameObject.Find("DialogManager").GetComponent<DialogManager>().InitializeDialog();
+            DialogTable.Temp_AppendDialog();
 
         for (var i = 0; i < _fontLocalizerList.Count; i++)
         {
@@ -77,13 +72,13 @@ public class LocalizeManager : Singleton<LocalizeManager>
         return null;
     }
 
-    public void AddFontLocalizer(FontLocalizer fontLocalizer)
+    public void AddFontLocalizer(TextLocalizer textLocalizer)
     {
-        _fontLocalizerList.Add(fontLocalizer);
+        _fontLocalizerList.Add(textLocalizer);
     }
     
-    public void RemoveFontLocalizer(FontLocalizer fontLocalizer)
+    public void RemoveFontLocalizer(TextLocalizer textLocalizer)
     {
-        _fontLocalizerList.Remove(fontLocalizer);
+        _fontLocalizerList.Remove(textLocalizer);
     }
 }

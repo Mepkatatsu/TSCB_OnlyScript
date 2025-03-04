@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class FontLocalizer : MonoBehaviour
+[RequireComponent(typeof(TMP_Text))]
+public class TextLocalizer : MonoBehaviour
 {
     [Serializable]
     public class FontAnchoredPosition
@@ -62,7 +63,7 @@ public class FontLocalizer : MonoBehaviour
         {
             if (language != fontAnchoredPositions[i].language)
                 continue;
-            
+
             var anchoredPositionX = fontAnchoredPositions[i].anchoredPositionX;
             var anchoredPositionY = fontAnchoredPositions[i].anchoredPositionY;
             var anchoredPosition = _rectTransform.anchoredPosition;

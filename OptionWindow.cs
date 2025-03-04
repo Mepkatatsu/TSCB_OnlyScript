@@ -1,4 +1,4 @@
-using SingletonPattern;
+using CoreLib;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,142 +17,112 @@ public class OptionWindow : MonoBehaviour
 
     public Slider bgmSlider;
     public Slider sfxSlider;
-    
-    private AudioManager _audioManager;
-    private StoryManager _storyManager;
 
     public void Init()
     {
-        if(_audioManager == null) 
-            _audioManager = AudioManager.Instance;
-        if (_storyManager == null) 
-            _storyManager = StoryManager.Instance;
-
-        if (optionQuitBtn)
-            optionQuitBtn.onClick.AddListener(OnClickOptionQuitBtn);
-        if (fps30Btn)
-            fps30Btn.onClick.AddListener(OnClickFPS30Btn);
-        if (fps60Btn)
-            fps60Btn.onClick.AddListener(OnClickFPS60Btn);
-        if (koreanBtn)
-            koreanBtn.onClick.AddListener(() => OnClickKoreanBtn());
-        if (japaneseBtn)
-            japaneseBtn.onClick.AddListener(() => OnClickJapaneseBtn());
-        if (bgmSlider)
-            bgmSlider.onValueChanged.AddListener(OnValueChangedBGM);
-        if (sfxSlider)
-            sfxSlider.onValueChanged.AddListener(OnValueChangedSFX);
+        optionQuitBtn.AddOnClickListener(OnClickOptionQuitBtn);
+        fps30Btn.AddOnClickListener(OnClickFPS30Btn);
+        fps60Btn.AddOnClickListener(OnClickFPS60Btn);
+        koreanBtn.AddOnClickListener(() => OnClickKoreanBtn());
+        japaneseBtn.AddOnClickListener(() => OnClickJapaneseBtn());
+        bgmSlider.AddOnValueChangedListener(OnValueChangedBGM);
+        sfxSlider.AddOnValueChangedListener(OnValueChangedSFX);
         
         InitOptionSettings();
     }
 
     private void InitOptionSettings()
     {
-        // 초기 PlayerPrefs 설정
-        if (!PlayerPrefs.HasKey("Language"))
-            PlayerPrefs.SetString("Language", "Korean");
-        if (!PlayerPrefs.HasKey("BGM"))
-            PlayerPrefs.SetFloat("BGM", 1);
-        if (!PlayerPrefs.HasKey("SFX"))
-            PlayerPrefs.SetFloat("SFX", 1);
-        if (!PlayerPrefs.HasKey("FPS"))
-            PlayerPrefs.SetInt("FPS", 60);
-
-        if (PlayerPrefs.HasKey("Language"))
+        // Language
+        var language = ClientSaveData.Language;
+        switch (language)
         {
-            var language = PlayerPrefs.GetString("Language");
-            switch (language)
-            {
-                case "Korean":
-                    OnClickKoreanBtn(false);
-                    break;
-                case "Japanese":
-                    OnClickJapaneseBtn(false);
-                    break;
-            }
+            case "Korean":
+                OnClickKoreanBtn(false);
+                break;
+            case "Japanese":
+                OnClickJapaneseBtn(false);
+                break;
         }
-        if (PlayerPrefs.HasKey("BGM"))
+        
+        // BGM
+        var bgmVolume = ClientSaveData.BGMVolume;
+        AudioManager.Instance.SetBGMVolume(bgmVolume);
+        bgmSlider.value = bgmVolume;
+        
+        // SFX
+        var sfxVolume = ClientSaveData.SFXVolume;
+        AudioManager.Instance.SetSFXVolume(sfxVolume);
+        sfxSlider.value = sfxVolume;
+        
+        // FrameRate
+        var frameRate = ClientSaveData.FrameRate;
+        Application.targetFrameRate = frameRate;
+        if (frameRate == 30)
         {
-            var bgm = PlayerPrefs.GetFloat("BGM");
-            _audioManager.SetBGMVolume(bgm);
-            bgmSlider.value = bgm;
+            fps30Selected.SetActive(true);
+            fps60Selected.SetActive(false);
         }
-        if (PlayerPrefs.HasKey("SFX"))
+        else
         {
-            var sfx = PlayerPrefs.GetFloat("SFX");
-            _audioManager.SetSFXVolume(sfx);
-            sfxSlider.value = sfx;
-        }
-        if (PlayerPrefs.HasKey("FPS"))
-        {
-            var fps = PlayerPrefs.GetInt("FPS");
-            Application.targetFrameRate = fps;
-            if (fps == 30)
-            {
-                fps30Selected.SetActive(true);
-                fps60Selected.SetActive(false);
-            }
-            else
-            {
-                fps30Selected.SetActive(false);
-                fps60Selected.SetActive(true);
-            }
+            fps30Selected.SetActive(false);
+            fps60Selected.SetActive(true);
         }
     }
 
     private void OnClickOptionQuitBtn()
     {
-        _audioManager.PlaySFX("ButtonCancel");
+        AudioManager.Instance.PlaySFX("ButtonCancel");
         gameObject.SetActive(false);
     }
 
     private void OnClickFPS30Btn()
     {
-        _audioManager.PlaySFX("ButtonClick");
+        AudioManager.Instance.PlaySFX("ButtonClick");
         fps30Selected.SetActive(true);
         fps60Selected.SetActive(false);
-        PlayerPrefs.SetInt("FPS", 30);
+        ClientSaveData.FrameRate = 30;
         Application.targetFrameRate = 30;
     }
 
     private void OnClickFPS60Btn()
     {
-        _audioManager.PlaySFX("ButtonClick");
+        AudioManager.Instance.PlaySFX("ButtonClick");
         fps30Selected.SetActive(false);
         fps60Selected.SetActive(true);
-        PlayerPrefs.SetInt("FPS", 60);
+        ClientSaveData.FrameRate = 60;
         Application.targetFrameRate = 60;
     }
 
     private void OnClickKoreanBtn(bool playSound = true)
     {
         if (playSound)
-            _audioManager.PlaySFX("ButtonClick");
+            AudioManager.Instance.PlaySFX("ButtonClick");
         koreanSelected.SetActive(true);
         japaneseSelected.SetActive(false);
         LocalizeManager.Instance.ChangeLanguage(LocalizeManager.Language.Korean);
-        PlayerPrefs.SetString("Language", "Korean");
+        ClientSaveData.Language = "Korean";
     }
 
     private void OnClickJapaneseBtn(bool playSound = true)
     {
         if (playSound)
-            _audioManager.PlaySFX("ButtonClick");
+            AudioManager.Instance.PlaySFX("ButtonClick");
         koreanSelected.SetActive(false);
         japaneseSelected.SetActive(true);
         LocalizeManager.Instance.ChangeLanguage(LocalizeManager.Language.Japanese);
-        PlayerPrefs.SetString("Language", "Japanese");
+        ClientSaveData.Language = "Japanese";
     }
     
     private void OnValueChangedBGM(float value)
     {
-        _audioManager.SetBGMVolume(value);
-        PlayerPrefs.SetFloat("BGM", value);
+        AudioManager.Instance.SetBGMVolume(value);
+        ClientSaveData.BGMVolume = value;
     }
 
     private void OnValueChangedSFX(float value)
     {
-        _audioManager.SetSFXVolume(value);
-        PlayerPrefs.SetFloat("SFX", value);
+        AudioManager.Instance.SetSFXVolume(value);
+        ClientSaveData.SFXVolume = value;
     }
 }

@@ -1,11 +1,9 @@
 using DG.Tweening;
-using SingletonPattern;
 using System.Collections;
 using UnityEngine;
 
 public class ShootingGameEnemy : MonoBehaviour
 {
-    private ShootingGameManager _shootingGameManager;
     [SerializeField] private int enemyMaxHp = 5;
     [SerializeField] private float attackDelay = 3;
     [SerializeField] private bool isThisBoss;
@@ -15,12 +13,6 @@ public class ShootingGameEnemy : MonoBehaviour
     private bool _isAvailableAttack;
 
     private Sequence _sequence;
-
-    private void Awake()
-    {
-        if (_shootingGameManager == null)
-            _shootingGameManager = ShootingGameManager.Instance;
-    }
 
     public void InitializeEnemy()
     {
@@ -53,18 +45,18 @@ public class ShootingGameEnemy : MonoBehaviour
             {
                 // 죽었을 때는 스킬이 시전되지 않고, 적 소환하지 않음 (최소 1초 대기)
 
-                while (!_shootingGameManager.IsAlivePlane)
+                while (!ShootingGameManager.Instance.IsAlivePlane)
                 {
                     yield return new WaitForSeconds(1);
                 }
 
                 if (i < 4)
                 {
-                    StartCoroutine(_shootingGameManager.UseBossSkill(i));
+                    StartCoroutine(ShootingGameManager.Instance.UseBossSkill(i));
                 }
                 else
                 {
-                    StartCoroutine(_shootingGameManager.DoNextPhase());
+                    StartCoroutine(ShootingGameManager.Instance.DoNextPhase());
                 }
 
                 yield return new WaitForSeconds(4);
@@ -98,14 +90,14 @@ public class ShootingGameEnemy : MonoBehaviour
     {
         while(true)
         {
-            if (!_shootingGameManager.IsAlivePlane)
+            if (!ShootingGameManager.Instance.IsAlivePlane)
             {
                 _isAvailableAttack = false;
                 yield return new WaitForSeconds(1);
             }
             else if (_isAvailableAttack == true)
             {
-                _shootingGameManager.ShootEnemyBulletToMidoriPlane(gameObject);
+                ShootingGameManager.Instance.ShootEnemyBulletToMidoriPlane(gameObject);
                 yield return new WaitForSeconds(attackDelay);
             }
             // 적 스폰 직후, 아군 부활 직후에 총알을 발사하지 않도록 최소 대기 시간 설정
