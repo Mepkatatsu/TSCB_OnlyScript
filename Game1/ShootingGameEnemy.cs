@@ -6,7 +6,8 @@ public class ShootingGameEnemy : MonoBehaviour
 {
     [SerializeField] private int enemyMaxHp = 5;
     [SerializeField] private float attackDelay = 3;
-    [SerializeField] private bool isThisBoss;
+    [SerializeField] private float speed;
+    [SerializeField] private bool isBoss;
 
     public int EnemyHP { get; private set; } = 5;
 
@@ -22,7 +23,7 @@ public class ShootingGameEnemy : MonoBehaviour
 
         SetEnemyMaxHP();
 
-        StartCoroutine(!isThisBoss ? DoEnemyAttack() : DoBossMove());
+        StartCoroutine(!isBoss ? DoEnemyAttack() : DoBossMove());
     }
 
     public void SetEnemyMaxHP()
@@ -190,5 +191,10 @@ public class ShootingGameEnemy : MonoBehaviour
     public void SetEnemyHP(int hp)
     {
         EnemyHP = hp;
+    }
+
+    public float GetSpeed()
+    {
+        return speed;
     }
 }

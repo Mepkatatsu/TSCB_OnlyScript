@@ -47,24 +47,15 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     [SerializeField] private GameObject midoriBulletPrefab;
     [SerializeField] private GameObject midoriHaloPrefab;
     [SerializeField] private GameObject enemyBulletPrefab;
-    [SerializeField] private GameObject pinkEnemyPrefab;
-    [SerializeField] private GameObject greenEnemyPrefab;
-    [SerializeField] private GameObject purpleEnemyPrefab;
-    [SerializeField] private GameObject yellowEnemyPrefab;
     [SerializeField] private GameObject explosionPrefab;
+    
+    [SerializeField] private ShootingGameEnemy pinkEnemyPrefab;
+    [SerializeField] private ShootingGameEnemy greenEnemyPrefab;
+    [SerializeField] private ShootingGameEnemy purpleEnemyPrefab;
+    [SerializeField] private ShootingGameEnemy yellowEnemyPrefab;
     
     [Header("Start Settings")]
     [SerializeField] private int startPhaseNum = 0; // 페이즈 (적 등장)
-
-    private readonly Queue<GameObject> _midoriBulletQueue = new Queue<GameObject>();
-    private readonly Queue<GameObject> _midoriHaloQueue = new Queue<GameObject>();
-    private readonly Queue<GameObject> _enemyBulletQueue = new Queue<GameObject>();
-
-    private readonly Queue<GameObject> _pinkEnemyQueue = new Queue<GameObject>();
-    private readonly Queue<GameObject> _greenEnemyQueue = new Queue<GameObject>();
-    private readonly Queue<GameObject> _purpleEnemyQueue = new Queue<GameObject>();
-    private readonly Queue<GameObject> _yellowEnemyQueue = new Queue<GameObject>();
-    private readonly Queue<GameObject> _explosionQueue = new Queue<GameObject>();
 
     private GameObject _yuzuGrenade;
 
@@ -112,10 +103,6 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     // 총알/적 이동 속도
     private const float MidoriBulletSpeed = 1.0f;
     private const float EnemyBulletSpeed = 1.0f;
-    private const float PinkEnemySpeed = 1.0f;
-    private const float GreenEnemySpeed = 1.5f;
-    private const float YellowEnemySpeed = 1.5f;
-    private const float PurpleEnemySpeed = 2f;
 
     #endregion Variables
 
@@ -341,7 +328,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         for (int i = 0; i < enemyList.Count; i++)
         {
             enemyList[i].SetActive(false);
-            EnqueEnemy(enemyList[i]);
+            SimpleGameObjectPool.ReleaseObject(enemyList[i]);
             enemyList[i].transform.SetParent(deadEnemyParent.transform);
             enemyList[i].GetComponent<ShootingGameEnemy>().StopMoving();
         }
@@ -434,7 +421,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             enemyList[i].GetComponent<ShootingGameEnemy>().StopMoving();
             if (!enemyList[i].activeSelf) continue;
             enemyList[i].SetActive(false);
-            EnqueEnemy(enemyList[i]);
+            SimpleGameObjectPool.ReleaseObject(enemyList[i]);
             enemyList[i].transform.SetParent(deadEnemyParent.transform);
             StartCoroutine(ShowExplosion(enemyList[i]));
 
@@ -451,156 +438,10 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         else StoryManager.Instance.DoShootingGameEnd("GameWin");
     }
 
-    #region For Object Pooling
-
-    private GameObject GetPrefab(string name)
-    {
-        if (name == "MidoriHalo")
-        {
-            if (_midoriHaloQueue.Count > 0)
-            {
-                return _midoriHaloQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewMidoriHalo();
-            }
-        }
-        else if (name == "MidoriBullet")
-        {
-            if (_midoriBulletQueue.Count > 0)
-            {
-                return _midoriBulletQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewMidoriBullet();
-            }
-        }
-        else if (name == "EnemyBullet")
-        {
-            if (_enemyBulletQueue.Count > 0)
-            {
-                return _enemyBulletQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewEnemyBullet();
-            }
-        }
-
-        if (name == "PinkEnemy")
-        {
-            if (_pinkEnemyQueue.Count > 0)
-            {
-                return _pinkEnemyQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewEnemy(name);
-            }
-        }
-        else if (name == "GreenEnemy")
-        {
-            if (_greenEnemyQueue.Count > 0)
-            {
-                return _greenEnemyQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewEnemy(name);
-            }
-        }
-        else if (name == "PurpleEnemy")
-        {
-            if (_purpleEnemyQueue.Count > 0)
-            {
-                return _purpleEnemyQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewEnemy(name);
-            }
-        }
-        else if (name == "YellowEnemy")
-        {
-            if (_yellowEnemyQueue.Count > 0)
-            {
-                return _yellowEnemyQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewEnemy(name);
-            }
-        }
-        else if (name == "Explosion")
-        {
-            if (_explosionQueue.Count > 0)
-            {
-                return _explosionQueue.Dequeue();
-            }
-            else
-            {
-                return CreateNewExplosion();
-            }
-        }
-        else
-        {
-            Debug.Log("GetFrefab 이름 오류");
-            return null;
-        }
-    }
-
-    // 새로운 폭발 이미지를 만듬
-    private GameObject CreateNewExplosion()
-    {
-        GameObject explosion = Instantiate(explosionPrefab);
-        explosion.SetActive(false);
-        explosion.transform.SetParent(explosionParent.transform);
-        explosion.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
-        explosion.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-        explosion.GetComponent<Image>().color = new Color(1, 1, 1, 0);
-        return explosion;
-    }
-
-    // 새로운 미도리 헤일로를 만듬
-    private GameObject CreateNewMidoriHalo()
-    {
-        GameObject halo = Instantiate(midoriHaloPrefab);
-        halo.SetActive(false);
-        halo.transform.SetParent(haloParent.transform);
-        halo.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
-        halo.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-        halo.GetComponent<Image>().color = new Color(1, 1, 1, 0);
-        return halo;
-    }
-
-    // 새로운 적 총알을 만듬
-    private GameObject CreateNewEnemyBullet()
-    {
-        GameObject bullet = Instantiate(enemyBulletPrefab);
-        bullet.SetActive(false);
-        bullet.transform.SetParent(bulletParent.transform);
-        bullet.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
-        bullet.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-        return bullet;
-    }
-
-    // 새로운 미도리의 총알을 만듬
-    private GameObject CreateNewMidoriBullet()
-    {
-        GameObject bullet = Instantiate(midoriBulletPrefab);
-        bullet.SetActive(false);
-        bullet.transform.SetParent(bulletParent.transform);
-        bullet.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
-        bullet.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-        return bullet;
-    }
-
     // 적을 지정된 위치에 소환
-    private GameObject SpawnEnemy(string name, Vector2 position)
+    private GameObject SpawnEnemy(ShootingGameEnemy enemyPrefab, Vector2 position)
     {
-        GameObject enemy = GetPrefab(name);
+        var enemy = SimpleGameObjectPool.AllocObject(enemyPrefab.gameObject, deadEnemyParent.transform);
 
         enemy.transform.SetParent(aliveEnemyParent.transform);
         enemy.SetActive(true);
@@ -610,97 +451,30 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         return enemy;
     }
 
-    // 새로운 적을 만듬
-    private GameObject CreateNewEnemy(string name)
-    {
-        GameObject enemy;
-
-        if (name == "PinkEnemy")
-        {
-            enemy = Instantiate(pinkEnemyPrefab);
-        }
-        else if (name == "GreenEnemy")
-        {
-            enemy = Instantiate(greenEnemyPrefab);
-        }
-        else if (name == "PurpleEnemy")
-        {
-            enemy = Instantiate(purpleEnemyPrefab);
-        }
-        else
-        {
-            enemy = Instantiate(yellowEnemyPrefab);
-        }
-
-        enemy.SetActive(false);
-        enemy.transform.SetParent(deadEnemyParent.transform);
-        enemy.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
-        enemy.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-
-        return enemy;
-    }
-
-    private void EnqueEnemy(GameObject enemy)
-    {
-        if (enemy.CompareTag("PinkEnemy"))
-        {
-            _pinkEnemyQueue.Enqueue(enemy);
-        }
-        else if (enemy.CompareTag("GreenEnemy"))
-        {
-            _greenEnemyQueue.Enqueue(enemy);
-        }
-        else if (enemy.CompareTag("YellowEnemy"))
-        {
-            _yellowEnemyQueue.Enqueue(enemy);
-        }
-        else if (enemy.CompareTag("PurpleEnemy"))
-        {
-            _purpleEnemyQueue.Enqueue(enemy);
-        }
-    }
-
-    #endregion For Object Pooling
-
     #region For Spawn Enemy
 
-    private void SpawnStraightEnemy(string enemyName, int spawnNum)
+    private void SpawnStraightEnemy(ShootingGameEnemy enemyPrefab, int spawnNum)
     {
-        GameObject enemy;
-
         float time = 30;
 
-        if (enemyName == "PinkEnemy")
-        {
-            time /= PinkEnemySpeed;
-        }
-        else if (enemyName == "GreenEnemy")
-        {
-            time /= GreenEnemySpeed;
-        }
-        else if (enemyName == "YellowEnemy")
-        {
-            time /= YellowEnemySpeed;
-        }
-        else if (enemyName == "PurpleEnemy")
-        {
-            time /= PurpleEnemySpeed;
-        }
+        time /= enemyPrefab.GetSpeed();
 
-        enemy = SpawnEnemy(enemyName, new Vector2(-300 + (spawnNum * 150), 600));
+        var enemy = SpawnEnemy(enemyPrefab, new Vector2(-300 + (spawnNum * 150), 600));
 
         enemy.GetComponent<ShootingGameEnemy>().DoEnemyMove(new Vector2(-300 + (spawnNum * 150), 600),
             new Vector2(-300 + (spawnNum * 150), -600), time);
     }
 
     // 적이 스폰되는 번호에 따라 위치와 동작 부여
-    private void SpawnBezierCurveEnemy(string enemyName, int spawnNum, float speed)
+    private void SpawnBezierCurveEnemy(ShootingGameEnemy enemyPrefab, int spawnNum)
     {
+        var speed = enemyPrefab.GetSpeed();
+        
         GameObject enemy;
 
         if (spawnNum == 0)
         {
-            enemy = SpawnEnemy(enemyName, new Vector2(-300, 600));
+            enemy = SpawnEnemy(enemyPrefab, new Vector2(-300, 600));
 
             enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(
                 enemy.GetComponent<RectTransform>().anchoredPosition,
@@ -708,7 +482,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         }
         else if (spawnNum == 1)
         {
-            enemy = SpawnEnemy(enemyName, new Vector2(-150, 600));
+            enemy = SpawnEnemy(enemyPrefab, new Vector2(-150, 600));
 
             enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(
                 enemy.GetComponent<RectTransform>().anchoredPosition,
@@ -716,7 +490,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         }
         else if (spawnNum == 2)
         {
-            enemy = SpawnEnemy(enemyName, new Vector2(150, 600));
+            enemy = SpawnEnemy(enemyPrefab, new Vector2(150, 600));
 
             enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(
                 enemy.GetComponent<RectTransform>().anchoredPosition,
@@ -724,7 +498,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         }
         else if (spawnNum == 3)
         {
-            enemy = SpawnEnemy(enemyName, new Vector2(300, 600));
+            enemy = SpawnEnemy(enemyPrefab, new Vector2(300, 600));
 
             enemy.GetComponent<ShootingGameEnemy>().DoBezierCurves2(
                 enemy.GetComponent<RectTransform>().anchoredPosition,
@@ -741,7 +515,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             for (int i = 0; i < 5; ++i)
             {
                 ++_leftEnemy;
-                SpawnStraightEnemy("PinkEnemy", i);
+                SpawnStraightEnemy(pinkEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 1)
@@ -749,7 +523,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             for (int i = 0; i < 5; ++i)
             {
                 ++_leftEnemy;
-                SpawnStraightEnemy("GreenEnemy", i);
+                SpawnStraightEnemy(greenEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 2)
@@ -757,7 +531,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             for (int i = 0; i < 4; ++i)
             {
                 ++_leftEnemy;
-                SpawnBezierCurveEnemy("YellowEnemy", i, YellowEnemySpeed);
+                SpawnBezierCurveEnemy(yellowEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 3)
@@ -765,7 +539,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             for (int i = 0; i < 4; ++i)
             {
                 ++_leftEnemy;
-                SpawnBezierCurveEnemy("PurpleEnemy", i, PurpleEnemySpeed);
+                SpawnBezierCurveEnemy(purpleEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 4)
@@ -774,14 +548,14 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
             for (int i = 0; i < 5; ++i)
             {
-                SpawnStraightEnemy("GreenEnemy", i);
+                SpawnStraightEnemy(greenEnemyPrefab, i);
             }
 
             yield return new WaitForSeconds(3);
 
             for (int i = 0; i < 4; ++i)
             {
-                SpawnBezierCurveEnemy("PurpleEnemy", i, PurpleEnemySpeed);
+                SpawnBezierCurveEnemy(purpleEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 5)
@@ -790,14 +564,14 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
             for (int i = 0; i < 5; ++i)
             {
-                SpawnStraightEnemy("GreenEnemy", i);
+                SpawnStraightEnemy(greenEnemyPrefab, i);
             }
 
             yield return new WaitForSeconds(3);
 
             for (int i = 0; i < 4; ++i)
             {
-                SpawnBezierCurveEnemy("YellowEnemy", i, YellowEnemySpeed);
+                SpawnBezierCurveEnemy(yellowEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 6)
@@ -806,14 +580,14 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
             for (int i = 0; i < 5; ++i)
             {
-                SpawnStraightEnemy("PinkEnemy", i);
+                SpawnStraightEnemy(pinkEnemyPrefab, i);
             }
 
             yield return new WaitForSeconds(3);
 
             for (int i = 0; i < 4; ++i)
             {
-                SpawnBezierCurveEnemy("PurpleEnemy", i, PurpleEnemySpeed);
+                SpawnBezierCurveEnemy(purpleEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 7)
@@ -822,14 +596,14 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
             for (int i = 0; i < 5; ++i)
             {
-                SpawnStraightEnemy("PinkEnemy", i);
+                SpawnStraightEnemy(pinkEnemyPrefab, i);
             }
 
             yield return new WaitForSeconds(3);
 
             for (int i = 0; i < 4; ++i)
             {
-                SpawnBezierCurveEnemy("YellowEnemy", i, YellowEnemySpeed);
+                SpawnBezierCurveEnemy(yellowEnemyPrefab, i);
             }
         }
         else if (_phaseNum == 8)
@@ -858,7 +632,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
                 for (int i = 0; i < 5; ++i)
                 {
                     ++_leftEnemy;
-                    SpawnStraightEnemy("PinkEnemy", i);
+                    SpawnStraightEnemy(pinkEnemyPrefab, i);
                 }
             }
             else if (_phaseNum % 4 == 2)
@@ -866,7 +640,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
                 for (int i = 0; i < 5; ++i)
                 {
                     ++_leftEnemy;
-                    SpawnStraightEnemy("GreenEnemy", i);
+                    SpawnStraightEnemy(greenEnemyPrefab, i);
                 }
             }
             else if (_phaseNum % 4 == 3)
@@ -874,7 +648,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
                 for (int i = 0; i < 4; ++i)
                 {
                     ++_leftEnemy;
-                    SpawnBezierCurveEnemy("YellowEnemy", i, YellowEnemySpeed);
+                    SpawnBezierCurveEnemy(yellowEnemyPrefab, i);
                 }
             }
             else if (_phaseNum % 4 == 0)
@@ -882,7 +656,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
                 for (int i = 0; i < 4; ++i)
                 {
                     ++_leftEnemy;
-                    SpawnBezierCurveEnemy("PurpleEnemy", i, PurpleEnemySpeed);
+                    SpawnBezierCurveEnemy(purpleEnemyPrefab, i);
                 }
             }
         }
@@ -924,7 +698,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
     private IEnumerator ShowExplosion(GameObject target)
     {
-        GameObject explosion = GetPrefab("Explosion");
+        var explosion = SimpleGameObjectPool.AllocObject(explosionPrefab, explosionParent.transform);
         explosion.GetComponent<RectTransform>().anchoredPosition =
             target.GetComponent<RectTransform>().anchoredPosition;
         explosion.SetActive(true);
@@ -933,7 +707,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
         yield return new WaitForSeconds(0.5f);
 
-        _explosionQueue.Enqueue(explosion);
+        SimpleGameObjectPool.ReleaseObject(explosion);
     }
 
     public IEnumerator HitByEnemy(GameObject midoriPlane, GameObject enemy)
@@ -1010,7 +784,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
                 target.GetComponent<ShootingGameEnemy>().StopMoving();
                 target.transform.SetParent(deadEnemyParent.transform);
-                EnqueEnemy(target);
+                SimpleGameObjectPool.ReleaseObject(target);
             }
         }
     }
@@ -1034,25 +808,6 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     }
 
     #region Helper Method
-
-    // mainObject가 direct을 바라보도록 회전
-    private void LookRotation2D(GameObject mainObject, Vector2 direction)
-    {
-        Vector3 vectorToTarget = direction - mainObject.GetComponent<RectTransform>().anchoredPosition;
-        vectorToTarget.z = 0;
-        float angle = 0;
-
-        if (mainObject.CompareTag("MidoriBullet"))
-        {
-            angle = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg - 90;
-        }
-        else if (mainObject.CompareTag("EnemyBullet"))
-        {
-            angle = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg + 90;
-        }
-
-        mainObject.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-    }
 
     // 총알의 목적지를 화면 밖까지 연장
     public Vector2 ExtendBulletDirection(Vector2 bulletPosition, Vector2 targetPosition)
@@ -1117,7 +872,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     public IEnumerator ShootEnemyBulletToMidoriPlaneCoroutine(GameObject enemy, Vector2 direction,
         string bulletName = "Normal")
     {
-        GameObject bullet = GetPrefab("EnemyBullet");
+        var bullet = SimpleGameObjectPool.AllocObject(enemyBulletPrefab, bulletParent.transform);
         bullet.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
 
         bullet.SetActive(true);
@@ -1155,7 +910,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             direction = ExtendBulletDirection(bullet.GetComponent<RectTransform>().anchoredPosition, direction);
         }
 
-        LookRotation2D(bullet, direction);
+        MathHelper.LookRotation2D(bullet, direction);
 
         float bulletDuration = Vector2.Distance(bullet.GetComponent<RectTransform>().anchoredPosition, direction) /
             600 * EnemyBulletSpeed;
@@ -1165,12 +920,12 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         yield return new WaitForSeconds(bulletDuration);
         bullet.GetComponent<Image>().color = Color.clear;
         bullet.SetActive(false);
-        _enemyBulletQueue.Enqueue(bullet);
+        SimpleGameObjectPool.ReleaseObject(bullet);
     }
 
     public IEnumerator ShootMidoriBullet(Vector2 direction)
     {
-        GameObject bullet = GetPrefab("MidoriBullet");
+        var bullet = SimpleGameObjectPool.AllocObject(midoriBulletPrefab, bulletParent.transform);
 
         bullet.SetActive(true);
         bullet.GetComponent<Image>().color = Color.white;
@@ -1185,7 +940,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
             direction = ExtendBulletDirection(bullet.GetComponent<RectTransform>().anchoredPosition, direction);
         }
 
-        LookRotation2D(bullet, direction);
+        MathHelper.LookRotation2D(bullet, direction);
 
         AudioManager.Instance.PlaySFX("Shoot");
 
@@ -1200,7 +955,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         yield return new WaitForSeconds(MinimumTime);
 
         bullet.SetActive(false);
-        _midoriBulletQueue.Enqueue(bullet);
+        SimpleGameObjectPool.ReleaseObject(bullet);
     }
 
     public IEnumerator UseBossSkill(int skillNum)
@@ -1366,7 +1121,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         // 가장 거리가 가까운 적 최대 5명에게 헤일로를 씌움
         for (int i = 0; i < haloRepeat; ++i)
         {
-            midoriHaloArray[i] = GetPrefab("MidoriHalo");
+            midoriHaloArray[i] = SimpleGameObjectPool.AllocObject(midoriHaloPrefab, haloParent.transform);
             midoriHaloArray[i].SetActive(true);
             midoriHaloArray[i].transform.SetParent(aliveEnemyParent.transform.GetChild(minIndexArray[i]));
             midoriHaloArray[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
@@ -1400,7 +1155,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         for (int i = 0; i < haloRepeat; ++i)
         {
             midoriHaloArray[i].transform.SetParent(haloParent.transform);
-            _midoriHaloQueue.Enqueue(midoriHaloArray[i]);
+            SimpleGameObjectPool.ReleaseObject(midoriHaloArray[i]);
         }
 
         _isActivatingSkill = false;
