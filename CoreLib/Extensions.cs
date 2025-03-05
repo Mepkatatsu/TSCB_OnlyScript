@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 
-public static class Extentions
+namespace CoreLib
 {
-    public static bool IsEmpty<T>(this List<T> list)
+    public static class Extentions
     {
-        return list == null || list.Count == 0;
+        public static bool IsEmpty<T>(this List<T> list)
+        {
+            return list == null || list.Count == 0;
+        }
     }
 }

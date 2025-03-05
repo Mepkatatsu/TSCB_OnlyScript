@@ -1,14 +1,17 @@
 using UnityEngine;
 
-public static class MathHelper
+namespace CoreLib
 {
-    public static void LookRotation2D(GameObject mainObject, Vector2 direction)
+    public static class MathHelper
     {
-        Vector3 vectorToTarget = direction - mainObject.GetComponent<RectTransform>().anchoredPosition;
-        vectorToTarget.z = 0;
+        public static void LookRotation2D(GameObject mainObject, Vector2 direction)
+        {
+            Vector3 vectorToTarget = direction - mainObject.GetComponent<RectTransform>().anchoredPosition;
+            vectorToTarget.z = 0;
         
-        var angle = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg - 90;
+            var angle = Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg - 90;
         
-        mainObject.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+            mainObject.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        }
     }
 }

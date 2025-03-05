@@ -7,7 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ShootingGameManager : Singleton<ShootingGameManager>
+public class ShootingGameManager : Singleton<ShootingGameManager>, IJoystickInputHandler
 {
     #region Variables
 
@@ -49,10 +49,13 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     [SerializeField] private GameObject enemyBulletPrefab;
     [SerializeField] private GameObject explosionPrefab;
     
-    [SerializeField] private ShootingGameEnemy pinkEnemyPrefab;
-    [SerializeField] private ShootingGameEnemy greenEnemyPrefab;
-    [SerializeField] private ShootingGameEnemy purpleEnemyPrefab;
-    [SerializeField] private ShootingGameEnemy yellowEnemyPrefab;
+    [SerializeField] private GameObject pinkEnemyPrefab;
+    [SerializeField] private GameObject greenEnemyPrefab;
+    [SerializeField] private GameObject purpleEnemyPrefab;
+    [SerializeField] private GameObject yellowEnemyPrefab;
+    
+    [Header("Joystick")]
+    [SerializeField] private JoystickController joystickController;
     
     [Header("Start Settings")]
     [SerializeField] private int startPhaseNum = 0; // 페이즈 (적 등장)
@@ -257,10 +260,10 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
         }
     }
 
-    public void SetJoystickInput(float inputX, float inputY)
+    public void HandleJoystickInput(Vector2 input)
     {
-        _joystickInputX = inputX;
-        _joystickInputY = inputY;
+        _joystickInputX = input.x;
+        _joystickInputY = input.y;
     }
 
     public void StartShootingGame()
@@ -277,6 +280,8 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     public void InitializeShootingGame()
     {
         StopAllCoroutines();
+        
+        joystickController.SetJoystickHandler(this);
 
         List<GameObject> enemyList = new List<GameObject>();
 
@@ -439,7 +444,7 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     }
 
     // 적을 지정된 위치에 소환
-    private GameObject SpawnEnemy(ShootingGameEnemy enemyPrefab, Vector2 position)
+    private GameObject SpawnEnemy(GameObject enemyPrefab, Vector2 position)
     {
         var enemy = SimpleGameObjectPool.AllocObject(enemyPrefab.gameObject, deadEnemyParent.transform);
 
@@ -453,11 +458,11 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
 
     #region For Spawn Enemy
 
-    private void SpawnStraightEnemy(ShootingGameEnemy enemyPrefab, int spawnNum)
+    private void SpawnStraightEnemy(GameObject enemyPrefab, int spawnNum)
     {
         float time = 30;
 
-        time /= enemyPrefab.GetSpeed();
+        time /= enemyPrefab.GetComponent<ShootingGameEnemy>().GetSpeed();
 
         var enemy = SpawnEnemy(enemyPrefab, new Vector2(-300 + (spawnNum * 150), 600));
 
@@ -466,9 +471,9 @@ public class ShootingGameManager : Singleton<ShootingGameManager>
     }
 
     // 적이 스폰되는 번호에 따라 위치와 동작 부여
-    private void SpawnBezierCurveEnemy(ShootingGameEnemy enemyPrefab, int spawnNum)
+    private void SpawnBezierCurveEnemy(GameObject enemyPrefab, int spawnNum)
     {
-        var speed = enemyPrefab.GetSpeed();
+        var speed = enemyPrefab.GetComponent<ShootingGameEnemy>().GetSpeed();
         
         GameObject enemy;
 

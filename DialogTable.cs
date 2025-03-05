@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using UnityEditor;
-using Newtonsoft.Json;
-using Debug = UnityEngine.Debug;
+using CoreLib;
 
 public static class DialogTable
 {

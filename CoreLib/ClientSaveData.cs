@@ -1,91 +1,94 @@
 using UnityEngine;
 
-public static class ClientSaveData
+namespace CoreLib
 {
-    public static string Language
+    public static class ClientSaveData
     {
-        get => GetData("Language", "Korean");
-        set => SetData("Language", value);
-    }
-    
-    public static float BGMVolume
-    {
-        get => GetData("BGMVolume", 1f);
-        set => SetData("BGMVolume", value);
-    }
-    
-    public static float SFXVolume
-    {
-        get => GetData("SFXVolume", 1f);
-        set => SetData("SFXVolume", value);
-    }
-    
-    public static int FrameRate
-    {
-        get => GetData("FrameRate", 60);
-        set => SetData("FrameRate", value);
-    }
-    
-    public static int StageProgress
-    {
-        get => GetData("StageProgress", 0);
-        set => SetData("StageProgress", value);
-    }
-    
-    private static string GetData(string key, string defVal)
-    {
-        if (PlayerPrefs.HasKey(key))
+        public static string Language
         {
-            return PlayerPrefs.GetString(key);
+            get => GetData("Language", "Korean");
+            set => SetData("Language", value);
         }
-        else
+    
+        public static float BGMVolume
         {
-            PlayerPrefs.SetString(key, defVal);
+            get => GetData("BGMVolume", 1f);
+            set => SetData("BGMVolume", value);
         }
+    
+        public static float SFXVolume
+        {
+            get => GetData("SFXVolume", 1f);
+            set => SetData("SFXVolume", value);
+        }
+    
+        public static int FrameRate
+        {
+            get => GetData("FrameRate", 60);
+            set => SetData("FrameRate", value);
+        }
+    
+        public static int StageProgress
+        {
+            get => GetData("StageProgress", 0);
+            set => SetData("StageProgress", value);
+        }
+    
+        private static string GetData(string key, string defVal)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                return PlayerPrefs.GetString(key);
+            }
+            else
+            {
+                PlayerPrefs.SetString(key, defVal);
+            }
         
-        return defVal;
-    }
-    
-    private static void SetData(string key, string val)
-    {
-        PlayerPrefs.SetString(key, val);
-    }
-    
-    private static float GetData(string key, float defVal)
-    {
-        if (PlayerPrefs.HasKey(key))
-        {
-            return PlayerPrefs.GetFloat(key);
+            return defVal;
         }
-        else
+    
+        private static void SetData(string key, string val)
         {
-            PlayerPrefs.SetFloat(key, defVal);
+            PlayerPrefs.SetString(key, val);
         }
+    
+        private static float GetData(string key, float defVal)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                return PlayerPrefs.GetFloat(key);
+            }
+            else
+            {
+                PlayerPrefs.SetFloat(key, defVal);
+            }
         
-        return defVal;
-    }
-    
-    private static void SetData(string key, float val)
-    {
-        PlayerPrefs.SetFloat(key, val);
-    }
-    
-    private static int GetData(string key, int defVal)
-    {
-        if (PlayerPrefs.HasKey(key))
-        {
-            return PlayerPrefs.GetInt(key);
+            return defVal;
         }
-        else
+    
+        private static void SetData(string key, float val)
         {
-            PlayerPrefs.SetInt(key, defVal);
+            PlayerPrefs.SetFloat(key, val);
         }
+    
+        private static int GetData(string key, int defVal)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                return PlayerPrefs.GetInt(key);
+            }
+            else
+            {
+                PlayerPrefs.SetInt(key, defVal);
+            }
         
-        return defVal;
-    }
+            return defVal;
+        }
     
-    private static void SetData(string key, int val)
-    {
-        PlayerPrefs.SetInt(key, val);
+        private static void SetData(string key, int val)
+        {
+            PlayerPrefs.SetInt(key, val);
+        }
     }
 }
